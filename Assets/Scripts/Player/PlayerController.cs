@@ -68,6 +68,7 @@ namespace Game.Player
         private int _row;
         private int _hp;
         private bool _dashing;
+        private bool _controlEnabled = true;
 
         private InputAction _moveAction;
 
@@ -124,6 +125,11 @@ namespace Game.Player
             if (!IsAlive)
             {
                 return; // 사망 시 정지 (애니메이션은 위에서 이미 마무리됨)
+            }
+
+            if (!_controlEnabled)
+            {
+                return; // 시작 UI 등에서 조작 비활성
             }
 
             if (_dashing)
@@ -252,7 +258,7 @@ namespace Game.Player
 
         public bool CanDash()
         {
-            return IsAlive && _map != null && !_dashing && !_isAnimating;
+            return IsAlive && _controlEnabled && _map != null && !_dashing && !_isAnimating;
         }
 
         /// <summary>
@@ -377,6 +383,12 @@ namespace Game.Player
                 Died?.Invoke();
                 // TODO: 사망 연출 → 결과 화면
             }
+        }
+
+        /// <summary>시작 UI / 컷신 등에서 플레이어 조작(이동·낙하·스킬 이동)을 켜고 끈다.</summary>
+        public void SetControlEnabled(bool value)
+        {
+            _controlEnabled = value;
         }
 
         public void Heal(int amount)

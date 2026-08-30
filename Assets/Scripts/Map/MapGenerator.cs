@@ -105,6 +105,7 @@ namespace Game.Map
         private int _topRow;
         private int _bottomRow;
         private bool _initialized;
+        private bool _streaming = true;
 
         // ------------------------------------------------------------------
         // 라이프사이클
@@ -138,10 +139,16 @@ namespace Game.Map
 
         private void Update()
         {
-            if (_initialized)
+            if (_initialized && _streaming)
             {
                 StreamRows();
             }
+        }
+
+        /// <summary>사망 되감기 중 등, 행 생성/회수를 잠시 멈춘다.</summary>
+        public void SetStreamingEnabled(bool enabled)
+        {
+            _streaming = enabled;
         }
 
         private BlockView CreateBlockView()
