@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Game.Player;
 
 namespace Game.Map
 {
@@ -12,8 +13,12 @@ namespace Game.Map
     ///   - col : 0 ~ 8, 왼쪽 → 오른쪽. col 4 가 월드 x=0 (중앙).
     ///   - row : 0(지표) 부터 아래로 증가. 깊을수록 row 값이 크다. 월드 y 는 감소.
     ///
-    /// 추적 대상(_tracked: 보통 플레이어)의 깊이를 기준으로,
-    /// 아래쪽 행은 미리 생성하고 화면 위로 벗어난 행은 풀에 반납한다.
+    /// 각 칸은 "지층 블록" 또는 "격자 엔티티(<see cref="GridEntity"/> = 적/아이템)" 중 하나를 담는다.
+    /// 엔티티가 있는 칸은 solid 취급되고, <see cref="DamageCell"/> 은 엔티티로 전달된다.
+    ///
+    /// 추적 대상(_tracked)의 깊이를 기준으로 아래 행은 미리 생성하고,
+    /// 화면 위로 벗어난 행은 풀에 반납한다. 플레이어는 위로 이동할 수 없으므로
+    /// 회수된 행은 다시 필요해지지 않는다.
     /// </summary>
     public class MapGenerator : MonoBehaviour
     {
@@ -23,11 +28,15 @@ namespace Game.Map
         [SerializeField] private BlockView _blockPrefab;
         [Tooltip("이 대상의 y 위치를 기준으로 행을 스트리밍한다 (보통 플레이어).")]
         [SerializeField] private Transform _tracked;
-        [Tooltip("생성된 블록들의 부모이자 그리드 (col 0, row 0) 의 원점. 비우면 이 오브젝트가 기준.")]
+        [Tooltip("적의 접촉 피해 판정 등에 사용. 보통 _tracked 와 같은 플레이어.")]
+        [SerializeField] private PlayerController _player;
+        [Tooltip("생성물의 부모이자 그리드 (col 0, row 0) 의 원점. 비우면 이 오브젝트가 기준.")]
         [SerializeField] private Transform _blockRoot;
 
-        /// <summary>그리드 원점 + 블록 부모. 인스펙터 미할당이어도(에디트 모드 포함) 안전하게 자기 Transform 사용.</summary>
+        /// <summary>그리드 원점 + 부모. 인스펙터 미할당이어도(에디트 모드 포함) 안전하게 자기 Transform 사용.</summary>
         private Transform Root => _blockRoot != null ? _blockRoot : transform;
+
+        public PlayerController Player => _player;
 
         [Header("Grid")]
         [SerializeField] private float _cellSize = 1f;
@@ -62,15 +71,39 @@ namespace Game.Map
             public int thickness;
         }
 
+        [Header("Entities (적 - 격자에 지층 대신 배치. 나중에 아이템도 동일 방식)")]
+        [SerializeField] private int _entitySeed = 12345;
+        [Tooltip("이 행부터 엔티티가 등장.")]
+        [SerializeField] private int _entityStartRow = 5;
+        [Tooltip("각 칸이 엔티티가 될 확률.")]
+        [SerializeField, Range(0f, 0.5f)] private float _entityDensity = 0.06f;
+        [Tooltip("엔티티 중 2x2 크기의 비율.")]
+        [SerializeField, Range(0f, 1f)] private float _bigEntityChance = 0.25f;
+        [Tooltip("1x1 적 프리팹 후보.")]
+        [SerializeField] private GridEntity[] _enemyPrefabs1x1;
+        [Tooltip("2x2 적 프리팹 후보. 비어 있으면 2x2 는 생성되지 않는다.")]
+        [SerializeField] private GridEntity[] _enemyPrefabs2x2;
+
+        // 이벤트 -----------------------------------------------------------
         /// <summary>블록이 완전히 파괴됐을 때: (col, row, 파괴된 블록 데이터).</summary>
         public event Action<int, int, BlockData> BlockDestroyed;
+        /// <summary>엔티티가 격자에 배치된 직후. (드롭/점수 시스템이 Enemy.Killed 등을 구독하는 지점)</summary>
+        public event Action<GridEntity> EntitySpawned;
+        /// <summary>엔티티가 파괴로 제거될 때 (회수와 구분).</summary>
+        public event Action<GridEntity> EntityCleared;
 
-        // 활성 행: row -> 행 데이터.
+        // 상태 -----------------------------------------------------------
         private readonly Dictionary<int, MapRow> _rows = new();
-        private ObjectPool<BlockView> _pool;
+        private ObjectPool<BlockView> _blockPool;
 
-        private int _topRow;    // 현재 유지 중인 가장 얕은 행
-        private int _bottomRow; // 현재 유지 중인 가장 깊은 행
+        // 엔티티 풀 (프리팹 단위)
+        private readonly Dictionary<GridEntity, ObjectPool<GridEntity>> _entityPools = new();
+        private readonly Dictionary<GridEntity, GridEntity> _entityPrefabOf = new();
+        // 아직 생성되지 않은 아랫행에 2x2 가 미리 예약한 칸.
+        private readonly Dictionary<long, GridEntity> _pendingEntityCells = new();
+
+        private int _topRow;
+        private int _bottomRow;
         private bool _initialized;
 
         // ------------------------------------------------------------------
@@ -79,9 +112,14 @@ namespace Game.Map
 
         private void Awake()
         {
+            if (_tracked == null && _player != null)
+            {
+                _tracked = _player.transform;
+            }
+
             int prewarm = Columns * (_rowsAhead + _rowsBehind + 4);
-            _pool = new ObjectPool<BlockView>(
-                createFunc: CreateView,
+            _blockPool = new ObjectPool<BlockView>(
+                createFunc: CreateBlockView,
                 actionOnGet: v => v.gameObject.SetActive(true),
                 actionOnRelease: v => v.gameObject.SetActive(false),
                 actionOnDestroy: v => Destroy(v.gameObject),
@@ -106,7 +144,7 @@ namespace Game.Map
             }
         }
 
-        private BlockView CreateView()
+        private BlockView CreateBlockView()
         {
             BlockView view = Instantiate(_blockPrefab, Root);
             view.gameObject.SetActive(false);
@@ -124,7 +162,6 @@ namespace Game.Map
             int wantBottom = focusRow + _rowsAhead;
             int wantTop = Mathf.Max(0, focusRow - _rowsBehind);
 
-            // 아래로 확장
             for (int row = _bottomRow + 1; row <= wantBottom; row++)
             {
                 BuildRow(row);
@@ -134,7 +171,6 @@ namespace Game.Map
                 _bottomRow = wantBottom;
             }
 
-            // 위쪽 회수
             for (int row = _topRow; row < wantTop; row++)
             {
                 ReleaseRow(row);
@@ -150,21 +186,44 @@ namespace Game.Map
             }
 
             var mapRow = new MapRow();
+            _rows.Add(row, mapRow);
+
             for (int col = 0; col < Columns; col++)
             {
+                long key = CellKey(col, row);
+
+                // 1) 위쪽 2x2 가 이 칸을 예약해 뒀나
+                if (_pendingEntityCells.TryGetValue(key, out GridEntity pending))
+                {
+                    _pendingEntityCells.Remove(key);
+                    mapRow.Entities[col] = pending;
+                    continue;
+                }
+
+                // 2) 이 행에서 왼쪽 2x2 가 이미 점유
+                if (mapRow.Entities[col] != null)
+                {
+                    continue;
+                }
+
+                // 3) 새 엔티티의 앵커?
+                if (CanPlaceEntityAnchor(col, row, out GridEntity prefab, out Vector2Int size))
+                {
+                    SpawnEntity(prefab, size, col, row, mapRow);
+                    continue;
+                }
+
+                // 4) 일반 지층
                 BlockData data = GenerateBlock(col, row);
                 mapRow.Cells[col] = data;
-
                 if (data.IsSolid)
                 {
-                    BlockView view = _pool.Get();
+                    BlockView view = _blockPool.Get();
                     view.transform.position = CellToWorld(col, row);
                     view.Bind(col, row, data);
                     mapRow.Views[col] = view;
                 }
             }
-
-            _rows.Add(row, mapRow);
         }
 
         private void ReleaseRow(int row)
@@ -178,12 +237,174 @@ namespace Game.Map
             {
                 if (mapRow.Views[col] != null)
                 {
-                    _pool.Release(mapRow.Views[col]);
+                    _blockPool.Release(mapRow.Views[col]);
                     mapRow.Views[col] = null;
+                }
+
+                GridEntity e = mapRow.Entities[col];
+                if (e != null)
+                {
+                    mapRow.Entities[col] = null;
+                    DespawnEntity(e); // 다른 활성 칸까지 정리 + 풀 반납 (idempotent)
                 }
             }
 
             _rows.Remove(row);
+        }
+
+        // ------------------------------------------------------------------
+        // 엔티티 배치
+        // ------------------------------------------------------------------
+
+        private bool CanPlaceEntityAnchor(int col, int row, out GridEntity prefab, out Vector2Int size)
+        {
+            prefab = null;
+            size = Vector2Int.one;
+
+            if (row < _entityStartRow)
+            {
+                return false;
+            }
+            if (Hash01(col, row, 1) >= _entityDensity)
+            {
+                return false;
+            }
+
+            bool big = Hash01(col, row, 2) < _bigEntityChance
+                       && _enemyPrefabs2x2 != null && _enemyPrefabs2x2.Length > 0;
+
+            if (big)
+            {
+                size = new Vector2Int(2, 2);
+                prefab = Pick(_enemyPrefabs2x2, Hash01(col, row, 3));
+            }
+            else
+            {
+                size = Vector2Int.one;
+                prefab = Pick(_enemyPrefabs1x1, Hash01(col, row, 3));
+            }
+
+            if (prefab == null || col + size.x > Columns)
+            {
+                return false;
+            }
+
+            // 이 행에서 가로로 자리 있는지
+            MapRow mr = _rows[row];
+            for (int dx = 0; dx < size.x; dx++)
+            {
+                if (mr.Entities[col + dx] != null)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void SpawnEntity(GridEntity prefab, Vector2Int size, int col, int row, MapRow anchorRow)
+        {
+            GridEntity e = GetPool(prefab).Get();
+            _entityPrefabOf[e] = prefab;
+
+            Vector3 c0 = CellToWorld(col, row);
+            Vector3 c1 = CellToWorld(col + size.x - 1, row + size.y - 1);
+            e.Place(this, col, row, (c0 + c1) * 0.5f);
+
+            for (int dy = 0; dy < size.y; dy++)
+            {
+                for (int dx = 0; dx < size.x; dx++)
+                {
+                    int cc = col + dx;
+                    int rr = row + dy;
+
+                    if (rr == row)
+                    {
+                        anchorRow.Entities[cc] = e;
+                    }
+                    else if (_rows.TryGetValue(rr, out MapRow lower))
+                    {
+                        lower.Entities[cc] = e;
+                    }
+                    else
+                    {
+                        _pendingEntityCells[CellKey(cc, rr)] = e;
+                    }
+                }
+            }
+
+            EntitySpawned?.Invoke(e);
+        }
+
+        /// <summary>엔티티가 스스로(사망 등) 제거를 요청. 파편/드롭 이벤트를 발생시킨다.</summary>
+        public void ClearEntity(GridEntity entity)
+        {
+            if (entity == null)
+            {
+                return;
+            }
+            EntityCleared?.Invoke(entity);
+            DespawnEntity(entity);
+        }
+
+        /// <summary>풋프린트 정리 + 풀 반납. 여러 번 호출해도 안전.</summary>
+        private void DespawnEntity(GridEntity entity)
+        {
+            if (entity == null || !_entityPrefabOf.TryGetValue(entity, out GridEntity prefab))
+            {
+                return;
+            }
+            _entityPrefabOf.Remove(entity);
+
+            Vector2Int s = entity.Size;
+            for (int dy = 0; dy < s.y; dy++)
+            {
+                for (int dx = 0; dx < s.x; dx++)
+                {
+                    int cc = entity.AnchorCol + dx;
+                    int rr = entity.AnchorRow + dy;
+                    if (cc >= 0 && cc < Columns
+                        && _rows.TryGetValue(rr, out MapRow mr) && mr.Entities[cc] == entity)
+                    {
+                        mr.Entities[cc] = null;
+                    }
+                    _pendingEntityCells.Remove(CellKey(cc, rr));
+                }
+            }
+
+            entity.Recycle();
+            GetPool(prefab).Release(entity);
+        }
+
+        private ObjectPool<GridEntity> GetPool(GridEntity prefab)
+        {
+            if (!_entityPools.TryGetValue(prefab, out ObjectPool<GridEntity> pool))
+            {
+                pool = new ObjectPool<GridEntity>(
+                    createFunc: () =>
+                    {
+                        GridEntity inst = Instantiate(prefab, Root);
+                        inst.gameObject.SetActive(false);
+                        return inst;
+                    },
+                    actionOnGet: null,
+                    actionOnRelease: null,
+                    actionOnDestroy: e => { if (e != null) { Destroy(e.gameObject); } },
+                    collectionCheck: false,
+                    defaultCapacity: 16,
+                    maxSize: 256);
+                _entityPools.Add(prefab, pool);
+            }
+            return pool;
+        }
+
+        private static GridEntity Pick(GridEntity[] arr, float t)
+        {
+            if (arr == null || arr.Length == 0)
+            {
+                return null;
+            }
+            int i = Mathf.Clamp(Mathf.FloorToInt(t * arr.Length), 0, arr.Length - 1);
+            return arr[i];
         }
 
         // ------------------------------------------------------------------
@@ -192,8 +413,6 @@ namespace Game.Map
 
         private BlockData GenerateBlock(int col, int row)
         {
-            // 지표는 비우고, 그 아래는 항상 solid.
-            // 빈 공간은 오직 플레이어가 파낸 결과로만 생긴다.
             if (row < _surfaceRows)
             {
                 return BlockData.Empty;
@@ -203,8 +422,6 @@ namespace Game.Map
             return new BlockData(type, HpFor(type));
         }
 
-        /// <summary>깊이(row)에 해당하는 지층 종류. 층을 위에서부터 두께만큼 쌓고,
-        /// 마지막 층보다 깊으면 마지막 층 종류를 계속 사용한다.</summary>
         private StrataType LayerAt(int row)
         {
             if (_layers == null || _layers.Length == 0)
@@ -212,7 +429,7 @@ namespace Game.Map
                 return StrataType.Soil;
             }
 
-            int depth = row - _surfaceRows; // 첫 층 기준 0부터
+            int depth = row - _surfaceRows;
             int cursor = 0;
             for (int i = 0; i < _layers.Length; i++)
             {
@@ -224,7 +441,7 @@ namespace Game.Map
                 cursor += thickness;
             }
 
-            return _layers[_layers.Length - 1].type; // 마지막 층 이후로 계속 이어짐
+            return _layers[_layers.Length - 1].type;
         }
 
         private int HpFor(StrataType type)
@@ -248,10 +465,24 @@ namespace Game.Map
 
         public bool IsSolid(int col, int row)
         {
-            return _rows.TryGetValue(row, out MapRow r) && r.Cells[col].IsSolid;
+            if (col < 0 || col >= Columns)
+            {
+                return true; // 벽
+            }
+            return _rows.TryGetValue(row, out MapRow r)
+                   && (r.Cells[col].IsSolid || r.Entities[col] != null);
         }
 
-        /// <summary>해당 행이 이미 생성(스트리밍)되어 데이터가 유효한지. 낙하 판정 등에서 사용.</summary>
+        /// <summary>이 칸에 엔티티(적/아이템)가 있으면 반환. 없으면 null.</summary>
+        public GridEntity GetEntity(int col, int row)
+        {
+            if (col < 0 || col >= Columns)
+            {
+                return null;
+            }
+            return _rows.TryGetValue(row, out MapRow r) ? r.Entities[col] : null;
+        }
+
         public bool IsRowReady(int row)
         {
             return _rows.ContainsKey(row);
@@ -259,13 +490,17 @@ namespace Game.Map
 
         public BlockData GetBlock(int col, int row)
         {
+            if (col < 0 || col >= Columns)
+            {
+                return BlockData.Empty;
+            }
             return _rows.TryGetValue(row, out MapRow r) ? r.Cells[col] : BlockData.Empty;
         }
 
         /// <summary>
-        /// 특정 칸에 피해를 준다. HP 가 0 이하가 되면 파괴하고 <see cref="BlockDestroyed"/> 를 발생시킨다.
+        /// 특정 칸에 피해를 준다. 엔티티가 있으면 엔티티에, 없으면 지층 블록에 적용.
         /// </summary>
-        /// <returns>이번 호출로 블록이 파괴됐으면 true.</returns>
+        /// <returns>이번 호출로 대상이 파괴됐으면 true.</returns>
         public bool DamageCell(int col, int row, int amount)
         {
             if (!InBounds(col, row) || amount <= 0)
@@ -277,6 +512,14 @@ namespace Game.Map
                 return false;
             }
 
+            // 엔티티 우선
+            GridEntity entity = mapRow.Entities[col];
+            if (entity != null)
+            {
+                return entity.ApplyDamage(amount); // 사망 시 내부에서 ClearEntity 호출
+            }
+
+            // 지층 블록
             BlockData data = mapRow.Cells[col];
             if (!data.IsSolid)
             {
@@ -295,12 +538,11 @@ namespace Game.Map
                 return false;
             }
 
-            // 파괴
             BlockData destroyed = data;
             mapRow.Cells[col] = BlockData.Empty;
             if (mapRow.Views[col] != null)
             {
-                _pool.Release(mapRow.Views[col]);
+                _blockPool.Release(mapRow.Views[col]);
                 mapRow.Views[col] = null;
             }
 
@@ -333,10 +575,29 @@ namespace Game.Map
 
         // ------------------------------------------------------------------
 
+        private static long CellKey(int col, int row)
+        {
+            return ((long)row << 20) | (uint)(col & 0xFFFFF);
+        }
+
+        private float Hash01(int col, int row, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)_entitySeed;
+                h = (h ^ (uint)(col * 73856093)) * 2654435761u;
+                h = (h ^ (uint)(row * 19349663)) * 2246822519u;
+                h = (h ^ (uint)(salt * 83492791)) * 3266489917u;
+                h ^= h >> 15;
+                return (h & 0xFFFFFF) / 16777216f;
+            }
+        }
+
         private class MapRow
         {
             public readonly BlockData[] Cells = new BlockData[Columns];
             public readonly BlockView[] Views = new BlockView[Columns];
+            public readonly GridEntity[] Entities = new GridEntity[Columns];
         }
 
 #if UNITY_EDITOR

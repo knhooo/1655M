@@ -35,11 +35,16 @@ namespace Game.Player
         [Tooltip("입력이 없을 때도 유지되는 스텝 간 최소 간격(초).")]
         [SerializeField] private float _stepInterval = 0.04f;
 
-        [Header("Dig")]
+        [Header("Dig (이동 = 채굴 = 적 타격, 모두 동일)")]
+        [Tooltip("막힌 칸으로 이동 시도 시 그 칸(지층/적)에 주는 피해.")]
         [SerializeField] private int _digPower = 1;
 
         [Header("Stats (임시)")]
         [SerializeField] private int _maxHp = 5;
+
+        [Header("Debug")]
+        [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그).")]
+        [SerializeField] private bool _showDebugHud = true;
 
         // 이벤트 ----------------------------------------------------------
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
@@ -104,15 +109,21 @@ namespace Game.Player
 
         private void Update()
         {
-            if (!IsAlive || _map == null)
+            if (_map == null)
             {
                 return;
             }
 
+            // 진행 중인 칸 이동은 죽더라도 끝까지 재생한다 (여기서 멈추면 코루틴/플래그가 stuck 된다).
             if (_isAnimating)
             {
                 TickAnimation();
                 return;
+            }
+
+            if (!IsAlive)
+            {
+                return; // 사망 시 정지 (애니메이션은 위에서 이미 마무리됨)
             }
 
             if (_dashing)
@@ -132,7 +143,7 @@ namespace Game.Player
                 return;
             }
 
-            // 2) 입력 처리 (이동 또는 자동 채굴)
+            // 2) 입력 처리 (이동 / 자동 채굴 / 적 타격)
             HandleMoveInput();
         }
 
@@ -188,12 +199,20 @@ namespace Game.Player
                 return;
             }
 
+            if (!_map.IsRowReady(tr))
+            {
+                return; // 아직 생성되지 않은 영역으로는 이동/채굴 불가 (빈 공간으로 새는 것 방지)
+            }
+
             if (_map.IsSolid(tc, tr))
             {
-                // 자동 채굴 — 이동하지 않는다.
+                // 이동하지 않고 그 칸을 타격 — 지층이든 적이든 동일하게 HP 를 깎는다.
                 BlockData before = _map.GetBlock(tc, tr);
                 _map.DamageCell(tc, tr, _digPower);
-                Dug?.Invoke(tc, tr, before);
+                if (before.IsSolid) // 지층 블록이었을 때만 채굴 이벤트 (적 타격 연출은 별도)
+                {
+                    Dug?.Invoke(tc, tr, before);
+                }
                 _actionTimer = _digInterval;
                 return;
             }
@@ -261,49 +280,54 @@ namespace Game.Player
             _dashing = true;
             DashStarted?.Invoke();
 
-            for (int step = 0; step < distance; step++)
+            try
             {
-                if (!IsAlive)
+                for (int step = 0; step < distance; step++)
                 {
-                    break;
-                }
-
-                int tr = _row + 1;
-
-                // 넓은 타격: 아래 칸 + 좌우 widthRadius
-                for (int dc = -widthRadius; dc <= widthRadius; dc++)
-                {
-                    int c = _col + dc;
-                    if (c < 0 || c >= MapGenerator.Columns)
+                    if (!IsAlive)
                     {
-                        continue;
+                        yield break;
                     }
-                    if (_map.IsSolid(c, tr))
+
+                    int tr = _row + 1;
+
+                    // 넓은 타격: 아래 칸 + 좌우 widthRadius
+                    for (int dc = -widthRadius; dc <= widthRadius; dc++)
                     {
-                        _map.DamageCell(c, tr, digPower);
+                        int c = _col + dc;
+                        if (c < 0 || c >= MapGenerator.Columns)
+                        {
+                            continue;
+                        }
+                        if (_map.IsSolid(c, tr))
+                        {
+                            _map.DamageCell(c, tr, digPower);
+                        }
+                        DashAffectedCell?.Invoke(c, tr);
                     }
-                    DashAffectedCell?.Invoke(c, tr);
-                }
 
-                // 정면(아래)을 못 뚫었으면 정지
-                if (!_map.IsRowReady(tr) || _map.IsSolid(_col, tr))
-                {
-                    break;
-                }
+                    // 정면(아래)을 못 뚫었으면 정지
+                    if (!_map.IsRowReady(tr) || _map.IsSolid(_col, tr))
+                    {
+                        yield break;
+                    }
 
-                _row = tr;
-                BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
-                CellChanged?.Invoke(_col, _row);
+                    _row = tr;
+                    BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
+                    CellChanged?.Invoke(_col, _row);
 
-                while (_isAnimating)
-                {
-                    yield return null;
+                    while (_isAnimating)
+                    {
+                        yield return null;
+                    }
                 }
             }
-
-            _dashing = false;
-            _actionTimer = _digInterval;
-            DashEnded?.Invoke();
+            finally
+            {
+                _dashing = false;
+                _actionTimer = _digInterval;
+                DashEnded?.Invoke();
+            }
         }
 
         // ------------------------------------------------------------------
@@ -349,6 +373,7 @@ namespace Game.Player
 
             if (_hp == 0)
             {
+                Debug.Log($"[Player] 사망 - depth {_row}", this);
                 Died?.Invoke();
                 // TODO: 사망 연출 → 결과 화면
             }
@@ -362,6 +387,20 @@ namespace Game.Player
             }
             _hp = Mathf.Min(_maxHp, _hp + amount);
             HpChanged?.Invoke(_hp);
+        }
+
+        private void OnGUI()
+        {
+            if (!_showDebugHud)
+            {
+                return;
+            }
+
+            string s = $"cell ({_col},{_row})  depth {_row}\n" +
+                       $"HP {_hp}/{_maxHp}  alive={IsAlive}\n" +
+                       $"anim={_isAnimating} dash={_dashing} timer={_actionTimer:F2}\n" +
+                       $"rowReady(below)={( _map != null && _map.IsRowReady(_row + 1))}";
+            GUI.Label(new Rect(10, 10, 400, 90), s);
         }
 
 #if UNITY_EDITOR
