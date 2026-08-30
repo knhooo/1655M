@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Game.Map;
@@ -45,6 +46,9 @@ namespace Game.Player
         public event Action<int, int, BlockData> Dug;       // (col, row, 파괴 전 데이터) 채굴 시도
         public event Action<int> HpChanged;                 // 현재 HP
         public event Action Died;
+        public event Action DashStarted;
+        public event Action DashEnded;
+        public event Action<int, int> DashAffectedCell;     // (col, row) 돌진이 타격한 칸 - 적 피해 훅
 
         // 상태 ----------------------------------------------------------
         public int Column => _col;
@@ -52,10 +56,13 @@ namespace Game.Player
         public int Depth => _row;                           // 심도 = row
         public int Hp => _hp;
         public bool IsAlive => _hp > 0;
+        public bool IsDashing => _dashing;
+        public bool IsBusy => _isAnimating || _dashing;
 
         private int _col;
         private int _row;
         private int _hp;
+        private bool _dashing;
 
         private InputAction _moveAction;
 
@@ -106,6 +113,11 @@ namespace Game.Player
             {
                 TickAnimation();
                 return;
+            }
+
+            if (_dashing)
+            {
+                return; // 돌진 코루틴이 이동을 제어
             }
 
             if (_actionTimer > 0f)
@@ -213,6 +225,85 @@ namespace Game.Player
                 return false; // 순수 위쪽 이동 금지
             }
             return true;
+        }
+
+        // ------------------------------------------------------------------
+        // 돌진 (스킬에서 호출)
+        // ------------------------------------------------------------------
+
+        public bool CanDash()
+        {
+            return IsAlive && _map != null && !_dashing && !_isAnimating;
+        }
+
+        /// <summary>
+        /// 현재 위치에서 수직 아래로 <paramref name="distance"/> 칸까지 빠르게 돌진한다.
+        /// 진행 방향(아래) + 좌우 <paramref name="widthRadius"/> 칸을 <paramref name="digPower"/> 로 타격.
+        /// 정면을 못 뚫으면 그 지점에서 멈춘다.
+        /// </summary>
+        public bool StartDash(int distance, int digPower, int widthRadius, float stepDuration)
+        {
+            if (!CanDash())
+            {
+                return false;
+            }
+
+            StartCoroutine(DashRoutine(
+                Mathf.Max(1, distance),
+                Mathf.Max(1, digPower),
+                Mathf.Max(0, widthRadius),
+                Mathf.Max(0.01f, stepDuration)));
+            return true;
+        }
+
+        private IEnumerator DashRoutine(int distance, int digPower, int widthRadius, float stepDuration)
+        {
+            _dashing = true;
+            DashStarted?.Invoke();
+
+            for (int step = 0; step < distance; step++)
+            {
+                if (!IsAlive)
+                {
+                    break;
+                }
+
+                int tr = _row + 1;
+
+                // 넓은 타격: 아래 칸 + 좌우 widthRadius
+                for (int dc = -widthRadius; dc <= widthRadius; dc++)
+                {
+                    int c = _col + dc;
+                    if (c < 0 || c >= MapGenerator.Columns)
+                    {
+                        continue;
+                    }
+                    if (_map.IsSolid(c, tr))
+                    {
+                        _map.DamageCell(c, tr, digPower);
+                    }
+                    DashAffectedCell?.Invoke(c, tr);
+                }
+
+                // 정면(아래)을 못 뚫었으면 정지
+                if (!_map.IsRowReady(tr) || _map.IsSolid(_col, tr))
+                {
+                    break;
+                }
+
+                _row = tr;
+                BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
+                CellChanged?.Invoke(_col, _row);
+
+                while (_isAnimating)
+                {
+                    yield return null;
+                }
+            }
+
+            _dashing = false;
+            _actionTimer = _digInterval;
+            DashEnded?.Invoke();
         }
 
         // ------------------------------------------------------------------
