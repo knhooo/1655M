@@ -8,6 +8,7 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Bb]uild[_-]*/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
@@ -37,6 +38,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -73,3 +75,53 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ---------------------------------------------------------------------------
+# IDE / OS
+# ---------------------------------------------------------------------------
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# AI tooling — Claude Code / Unity MCP
+# These are local dev-machine tooling and must NOT ship with the assignment.
+# The MCP editor package stays declared in Packages/manifest.json (that is
+# fine); everything below is per-machine state, config, or a local server.
+# ---------------------------------------------------------------------------
+
+# Claude Code workspace (local settings, session data, command history)
+.claude/
+.claude-code/
+CLAUDE.local.md
+
+# Claude Code project MCP server config (contains local paths / possibly tokens)
+.mcp.json
+
+# Unity MCP bridge / server runtime state
+#  - CoplayDev "MCP for Unity"  (com.coplaydev.unity-mcp)
+#  - Ivan Murzak "AI Game Dev"  (com.ivanmurzak.unity.mcp)
+#  - justinpbarnett "unity-mcp" (com.justinpbarnett.unity-mcp)
+/[Uu]nityMCP/
+/[Mm]cpServer/
+/[Ll]ibrary/UnityMCP/
+/[Ll]ibrary/com.coplaydev.unity-mcp/
+/[Ll]ibrary/com.IvanMurzak.Unity.MCP*/
+mcp-unity-bridge.log
+unity-mcp-*.log
+McpUnity*.json
+mcp-config.json
+mcp-status.json
+*.mcp-port
+
+# uv / Python env if an MCP server ever gets vendored into the repo
+.venv/
+__pycache__/
+*.pyc
+
+# ---------------------------------------------------------------------------
+# Assignment working notes stay tracked on purpose — do NOT ignore:
+#   AI_USAGE.md, SPEC_NOTES.md, docs/
+# ---------------------------------------------------------------------------
