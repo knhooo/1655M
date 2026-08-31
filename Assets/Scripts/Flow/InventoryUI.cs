@@ -78,6 +78,8 @@ namespace Game.Flow
             {
                 _backButton.onClick.AddListener(OnBack);
             }
+
+            CloseAllTabs(); // 시작 시 모든 페이지 닫힘
         }
 
         private void OnEnable() => PlayerStats.Changed += Refresh;
@@ -92,7 +94,7 @@ namespace Game.Flow
         public void SlideIn()
         {
             Refresh();
-            SelectTab(0);
+            CloseAllTabs(); // 열 때는 아무 탭도 선택 안 됨 - 버튼을 눌러야 페이지가 뜸
             StartSlide(_shownPos);
         }
 
@@ -111,6 +113,7 @@ namespace Game.Flow
             }
         }
 
+        /// <summary>index 페이지만 활성, 나머지 비활성. index 가 범위 밖이면 전부 비활성.</summary>
         private void SelectTab(int index)
         {
             if (_tabs == null)
@@ -125,6 +128,8 @@ namespace Game.Flow
                 }
             }
         }
+
+        private void CloseAllTabs() => SelectTab(-1);
 
         // ------------------------------------------------------------------
         // 슬라이드

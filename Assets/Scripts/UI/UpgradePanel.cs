@@ -9,11 +9,13 @@ using Game.Flow;
 namespace Game.UI
 {
     /// <summary>
-    /// 인벤토리 Status 탭의 단일 강화 패널.
-    ///  - 선택 버튼들: 어떤 항목(Damage / Armor / Skill1~3)을 강화할지 고른다.
-    ///  - 상세: 선택한 항목의 Lv / 비용 / [강화] 버튼. 텍스트만 바뀜.
-    ///  - 하단: 현재 Damage / HP / Sword Damage 요약 (선택한 항목과 무관, 항상 최신).
-    /// StatusPage 에 붙인다 (탭 전환으로 활성/비활성).
+    /// 인벤토리 Status 탭.
+    ///  - 하단 요약: 현재 Damage / HP / Sword Damage (항상 표시).
+    ///  - 선택 버튼(Damage/Armor/Skill1~3) 클릭 → 강화 팝업 활성화.
+    ///  - 팝업: 그 항목의 Lv / 비용 / [강화]. 바깥(배경) 클릭 시 닫힘.
+    ///  - 팝업이 떠 있는 동안 배경이 클릭을 막아 다른 버튼 못 누름 (모달).
+    ///
+    /// 이 컴포넌트는 StatusPage(항상 활성) 에 붙인다. 팝업 자체는 _popupRoot 로 토글.
     /// </summary>
     public class UpgradePanel : MonoBehaviour
     {
@@ -24,21 +26,25 @@ namespace Game.UI
             public UpgradeKind kind;
         }
 
-        [Tooltip("항목 선택 버튼들. button 과 kind 를 짝지어 연결.")]
+        [Header("항목 선택 버튼 (StatusPage 상시 표시)")]
         [SerializeField] private Selector[] _selectors;
-        [Tooltip("처음 표시할 항목.")]
-        [SerializeField] private UpgradeKind _selected = UpgradeKind.Damage;
 
-        [Header("선택한 항목 상세 (선택)")]
+        [Header("팝업")]
+        [Tooltip("강화 팝업 루트. 기본 비활성. 선택 버튼 누르면 켜짐.")]
+        [SerializeField] private GameObject _popupRoot;
+        [Tooltip("팝업 뒤 전체를 덮는 배경 버튼. 클릭 시 팝업 닫힘 + 뒤 버튼 클릭 차단.")]
+        [SerializeField] private Button _backdropButton;
         [SerializeField] private TMP_Text _nameText;    // "Damage"
         [SerializeField] private TMP_Text _levelText;   // "Lv.3"
         [SerializeField] private TMP_Text _costText;    // "Coin 4 / Gold 4"
         [SerializeField] private Button _upgradeButton;
 
-        [Header("현재 스탯 요약 (Status 페이지 하단, 선택)")]
+        [Header("현재 스탯 요약 (하단, 상시 표시)")]
         [SerializeField] private TMP_Text _damageText;       // "Damage 23"
         [SerializeField] private TMP_Text _hpText;           // "HP 550"
         [SerializeField] private TMP_Text _swordDamageText;  // "Sword Damage 15%"
+
+        private UpgradeKind _selected;
 
         private void Awake()
         {
@@ -49,19 +55,32 @@ namespace Game.UI
                     if (s != null && s.button != null)
                     {
                         UpgradeKind k = s.kind;
-                        s.button.onClick.AddListener(() => Select(k));
+                        s.button.onClick.AddListener(() => OpenFor(k));
                     }
                 }
+            }
+            if (_backdropButton != null)
+            {
+                _backdropButton.onClick.AddListener(Close);
             }
             if (_upgradeButton != null)
             {
                 _upgradeButton.onClick.AddListener(OnUpgrade);
+            }
+
+            if (_popupRoot != null)
+            {
+                _popupRoot.SetActive(false);
             }
         }
 
         private void OnEnable()
         {
             PlayerStats.Changed += Refresh;
+            if (_popupRoot != null)
+            {
+                _popupRoot.SetActive(false); // 탭 다시 열 때는 팝업 닫힌 상태
+            }
             Refresh();
         }
 
@@ -70,65 +89,47 @@ namespace Game.UI
             PlayerStats.Changed -= Refresh;
         }
 
-        /// <summary>선택 버튼에서 호출 (또는 코드).</summary>
-        public void Select(UpgradeKind kind)
+        /// <summary>선택 버튼에서 호출. 팝업을 그 항목으로 연다.</summary>
+        public void OpenFor(UpgradeKind kind)
         {
             _selected = kind;
+            if (_popupRoot != null)
+            {
+                _popupRoot.SetActive(true);
+            }
             Refresh();
         }
 
-        /// <summary>인스펙터 onClick 에서 직접 쓰고 싶을 때용 (0=Damage, 1=Armor ...).</summary>
-        public void Select(int kind) => Select((UpgradeKind)kind);
+        /// <summary>인스펙터 onClick 용 (0=Damage, 1=Armor ...).</summary>
+        public void OpenFor(int kind) => OpenFor((UpgradeKind)kind);
+
+        public void Close()
+        {
+            if (_popupRoot != null)
+            {
+                _popupRoot.SetActive(false);
+            }
+        }
 
         private void OnUpgrade() => PlayerStats.TryUpgrade(_selected); // 성공 시 Changed → Refresh 자동
 
         private void Refresh()
         {
-            int coin = GameManager.GetTotalCurrency(CurrencyType.Coin);
-            int gold = GameManager.GetTotalCurrency(CurrencyType.Gold);
-            CurrencyCost cost = PlayerStats.GetCost(_selected);
+            // 하단 요약 (항상)
+            if (_damageText != null) _damageText.text = $"Damage {PlayerStats.Damage}";
+            if (_hpText != null) _hpText.text = $"HP {PlayerStats.MaxHp}";
+            if (_swordDamageText != null) _swordDamageText.text = $"Sword Damage {PlayerStats.CritChance:0}%";
 
-            if (_nameText != null)
-            {
-                _nameText.text = PlayerStats.DisplayName(_selected);
-            }
-            if (_levelText != null)
-            {
-                _levelText.text = $"Lv.{PlayerStats.GetLevel(_selected)}";
-            }
-            if (_costText != null)
-            {
-                _costText.text = $"Coin {cost.Coin} / Gold {cost.Gold}";
-            }
+            // 팝업 상세
+            CurrencyCost cost = PlayerStats.GetCost(_selected);
+            if (_nameText != null) _nameText.text = PlayerStats.DisplayName(_selected);
+            if (_levelText != null) _levelText.text = $"Lv.{PlayerStats.GetLevel(_selected)}";
+            if (_costText != null) _costText.text = $"Coin {cost.Coin} / Gold {cost.Gold}";
             if (_upgradeButton != null)
             {
-                _upgradeButton.interactable = coin >= cost.Coin && gold >= cost.Gold;
-            }
-
-            // 하단 현재 스탯 요약
-            if (_damageText != null)
-            {
-                _damageText.text = $"Damage {PlayerStats.Damage}";
-            }
-            if (_hpText != null)
-            {
-                _hpText.text = $"HP {PlayerStats.MaxHp}";
-            }
-            if (_swordDamageText != null)
-            {
-                _swordDamageText.text = $"Sword Damage {PlayerStats.CritChance:0}%";
-            }
-
-            // 선택된 항목 버튼은 눌린 것처럼 비활성 표시
-            if (_selectors != null)
-            {
-                foreach (Selector s in _selectors)
-                {
-                    if (s != null && s.button != null)
-                    {
-                        s.button.interactable = s.kind != _selected;
-                    }
-                }
+                _upgradeButton.interactable =
+                    GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
+                    && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
             }
         }
     }
