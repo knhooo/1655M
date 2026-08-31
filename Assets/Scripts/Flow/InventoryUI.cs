@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Game.Player;
 
 namespace Game.Flow
 {
@@ -28,10 +26,6 @@ namespace Game.Flow
         [SerializeField] private RectTransform _rt;
 
         [Header("내용")]
-        [Tooltip("보유 재화 1 표시.")]
-        [SerializeField] private TMP_Text _coinText;
-        [Tooltip("보유 재화 2 표시.")]
-        [SerializeField] private TMP_Text _goldText;
         [Tooltip("Status / Sword / Items 순. button 과 page 를 짝지어 연결.")]
         [SerializeField] private Tab[] _tabs;
         [Tooltip("타이틀로 돌아가기. 선택.")]
@@ -82,9 +76,6 @@ namespace Game.Flow
             CloseAllTabs(); // 시작 시 모든 페이지 닫힘
         }
 
-        private void OnEnable() => PlayerStats.Changed += Refresh;
-        private void OnDisable() => PlayerStats.Changed -= Refresh;
-
         public void HideInstant()
         {
             StopSlide();
@@ -93,25 +84,11 @@ namespace Game.Flow
 
         public void SlideIn()
         {
-            Refresh();
             CloseAllTabs(); // 열 때는 아무 탭도 선택 안 됨 - 버튼을 눌러야 페이지가 뜸
             StartSlide(_shownPos);
         }
 
         public void SlideOut() => StartSlide(_hiddenPos);
-
-        /// <summary>재화 등 표시 갱신. 인벤토리를 열 때 + 강화 후 호출.</summary>
-        public void Refresh()
-        {
-            if (_coinText != null)
-            {
-                _coinText.text = GameManager.GetTotalCurrency(Economy.CurrencyType.Coin).ToString();
-            }
-            if (_goldText != null)
-            {
-                _goldText.text = GameManager.GetTotalCurrency(Economy.CurrencyType.Gold).ToString();
-            }
-        }
 
         /// <summary>index 페이지만 활성, 나머지 비활성. index 가 범위 밖이면 전부 비활성.</summary>
         private void SelectTab(int index)

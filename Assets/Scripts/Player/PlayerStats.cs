@@ -47,17 +47,40 @@ namespace Game.Player
 
         public static int GetLevel(UpgradeKind k) => Mathf.Max(0, PlayerPrefs.GetInt(LevelKey(k), 0));
 
-        /// <summary>다음 레벨 비용. (임시: 선형)</summary>
+        /// <summary>
+        /// 다음 레벨 비용. (임시: 선형)
+        ///  - Damage / Armor : Coin + Gold
+        ///  - Skill1~3       : Coin + 해당 스킬 전용 재화(Rune1~3)
+        /// </summary>
         public static CurrencyCost GetCost(UpgradeKind k)
         {
-            int lv = GetLevel(k);
-            return new CurrencyCost(lv + 1, lv + 1);
+            int n = GetLevel(k) + 1;
+            switch (k)
+            {
+                case UpgradeKind.Damage:
+                case UpgradeKind.Armor:
+                    return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Gold, n));
+                case UpgradeKind.Skill1:
+                    return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Rune1, n));
+                case UpgradeKind.Skill2:
+                    return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Rune2, n));
+                case UpgradeKind.Skill3:
+                    return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Rune3, n));
+                default:
+                    return new CurrencyCost((CurrencyType.Coin, n));
+            }
         }
 
         public static bool CanAfford(CurrencyCost cost)
         {
-            return GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
-                && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
+            foreach ((CurrencyType type, int amount) in cost.Entries())
+            {
+                if (GameManager.GetTotalCurrency(type) < amount)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public static bool TryUpgrade(UpgradeKind k)
@@ -67,8 +90,10 @@ namespace Game.Player
             {
                 return false;
             }
-            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
-            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
+            foreach ((CurrencyType type, int amount) in cost.Entries())
+            {
+                GameManager.AddTotalCurrency(type, -amount);
+            }
             PlayerPrefs.SetInt(LevelKey(k), GetLevel(k) + 1);
             PlayerPrefs.Save();
             Changed?.Invoke();

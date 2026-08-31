@@ -7,34 +7,61 @@ using Game.Equipment;
 namespace Game.Interactables
 {
     /// <summary>
-    /// 격자에 지층 대신 배치되는 상자. 부수면 재화 또는 검이 나온다. 접촉 피해 없음.
-    /// 배치·풀링은 적과 동일한 <see cref="GridEntity"/> / <see cref="MapGenerator"/> 경로.
-    /// 상자 배치는 결정적(해시)이지만, 내용물은 매번 랜덤이다.
+    /// 격자에 지층 대신 배치되는 상자. 부수면 <b>재화 5종 중 하나 또는 랜덤 등급 검</b>을
+    /// 가중치로 하나 골라 지급한다. 접촉 피해 없음.
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     public class Chest : GridEntity
     {
+        private enum DropKind { Currency, Sword }
+
         [Serializable]
         private class Drop
         {
-            public bool isSword;
-            [Tooltip("isSword 일 때 지급할 검 등급.")]
-            public SwordRarity swordRarity = SwordRarity.Normal;
-            [Tooltip("검이 아닐 때 지급할 재화 종류.")]
+            public DropKind kind = DropKind.Currency;
+            [Tooltip("kind == Currency 일 때 지급할 재화.")]
             public CurrencyType currency = CurrencyType.Coin;
-            [Tooltip("검이 아닐 때 지급할 재화량.")]
-            public int currencyAmount = 5;
+            [Tooltip("kind == Currency 일 때 지급량(min~max).")]
+            public Vector2Int amount = new Vector2Int(2, 5);
+            [Min(0f)] public float weight = 1f;
+        }
+
+        [Serializable]
+        private class SwordChance
+        {
+            public SwordRarity rarity;
             [Min(0f)] public float weight = 1f;
         }
 
         [Header("Chest")]
         [SerializeField] private int _maxHp = 40;
         [SerializeField] private SpriteRenderer _renderer;
-        [Tooltip("가능한 드롭 목록. 가중치로 하나 선택. 예: 재화 w3, Normal검 w2, Unique검 w1 ...")]
-        [SerializeField] private Drop[] _drops;
 
-        /// <summary>부순 결과: (무기 여부, 표시용 라벨). 토스트/사운드용.</summary>
-        public event Action<bool, string> Opened;
+        [Tooltip("이 중 가중치로 하나만 지급.")]
+        [SerializeField]
+        private Drop[] _drops =
+        {
+            new Drop { kind = DropKind.Currency, currency = CurrencyType.Coin,  amount = new Vector2Int(4, 10), weight = 35f },
+            new Drop { kind = DropKind.Currency, currency = CurrencyType.Gold,  amount = new Vector2Int(2, 6),  weight = 20f },
+            new Drop { kind = DropKind.Currency, currency = CurrencyType.Rune1, amount = new Vector2Int(1, 3),  weight = 10f },
+            new Drop { kind = DropKind.Currency, currency = CurrencyType.Rune2, amount = new Vector2Int(1, 3),  weight = 10f },
+            new Drop { kind = DropKind.Currency, currency = CurrencyType.Rune3, amount = new Vector2Int(1, 3),  weight = 10f },
+            new Drop { kind = DropKind.Sword, weight = 15f },
+        };
+
+        [Header("검 등급 가중치 (kind == Sword 일 때)")]
+        [SerializeField]
+        private SwordChance[] _swordTable =
+        {
+            new SwordChance { rarity = SwordRarity.Normal, weight = 50f },
+            new SwordChance { rarity = SwordRarity.Unique, weight = 30f },
+            new SwordChance { rarity = SwordRarity.Legendary, weight = 14f },
+            new SwordChance { rarity = SwordRarity.SuperLegendary, weight = 5f },
+            new SwordChance { rarity = SwordRarity.UltimateLegendary, weight = 1f },
+        };
+
+        /// <summary>부순 결과 라벨. 토스트/사운드용. 예: "Coin +7", "Legendary 검".</summary>
+        public event Action<string> Opened;
 
         private int _hp;
 
@@ -76,64 +103,75 @@ namespace Game.Interactables
 
         private void GiveReward()
         {
-            Drop d = PickDrop();
+            Drop d = PickWeighted(_drops, x => x?.weight ?? 0f);
             if (d == null)
             {
-                Opened?.Invoke(false, "빈 상자");
+                Opened?.Invoke("빈 상자");
                 return;
             }
 
-            if (d.isSword)
+            string label;
+            if (d.kind == DropKind.Sword)
             {
-                RunInventory.Instance?.AddFound(d.swordRarity);
-                Opened?.Invoke(true, d.swordRarity.DisplayName());
-                Debug.Log($"[Chest] 검 획득: {d.swordRarity.DisplayName()}", this);
+                SwordRarity rarity = PickSword();
+                RunInventory.Instance?.AddFound(rarity);
+                label = $"{rarity.DisplayName()} 검";
             }
             else
             {
-                int amount = Mathf.Max(1, d.currencyAmount);
-                RunWallet.Instance?.Add(d.currency, amount);
-                Opened?.Invoke(false, $"+{amount}");
-                Debug.Log($"[Chest] {d.currency.DisplayName()} +{amount}", this);
+                int give = Roll(d.amount);
+                RunWallet.Instance?.Add(d.currency, give);
+                label = $"{d.currency.DisplayName()} +{give}";
             }
-            // TODO: 드롭 파티클 / 픽업 튐 연출 / 사운드
+
+            Opened?.Invoke(label);
+            Debug.Log($"[Chest] {label}", this);
+            // TODO: 드롭 파티클 / 사운드
         }
 
-        private Drop PickDrop()
+        private SwordRarity PickSword()
         {
-            if (_drops == null || _drops.Length == 0)
+            SwordChance s = PickWeighted(_swordTable, x => x?.weight ?? 0f);
+            return s != null ? s.rarity : SwordRarity.Normal;
+        }
+
+        // ------------------------------------------------------------------
+
+        private static int Roll(Vector2Int range)
+        {
+            int lo = Mathf.Max(0, range.x);
+            int hi = Mathf.Max(lo, range.y);
+            return UnityEngine.Random.Range(lo, hi + 1);
+        }
+
+        private static T PickWeighted<T>(T[] items, Func<T, float> weight) where T : class
+        {
+            if (items == null || items.Length == 0)
             {
                 return null;
             }
 
             float total = 0f;
-            foreach (Drop d in _drops)
+            foreach (T it in items)
             {
-                if (d != null)
-                {
-                    total += Mathf.Max(0f, d.weight);
-                }
+                total += Mathf.Max(0f, weight(it));
             }
             if (total <= 0f)
             {
-                return null;
+                return items[0];
             }
 
             float pick = UnityEngine.Random.value * total;
             float acc = 0f;
-            foreach (Drop d in _drops)
+            foreach (T it in items)
             {
-                if (d == null)
-                {
-                    continue;
-                }
-                acc += Mathf.Max(0f, d.weight);
+                acc += Mathf.Max(0f, weight(it));
                 if (pick <= acc)
                 {
-                    return d;
+                    return it;
                 }
             }
-            return _drops[_drops.Length - 1];
+            return items[items.Length - 1];
         }
     }
 }

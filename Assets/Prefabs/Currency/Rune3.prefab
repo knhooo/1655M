@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3688409965358433479
+--- !u!1 &8402412884061235969
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,39 +8,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6557702526871457491}
-  - component: {fileID: 8489920639826015958}
-  - component: {fileID: 8276540668661123389}
+  - component: {fileID: 1228458169804916526}
+  - component: {fileID: 5684455755248725530}
+  - component: {fileID: 2492819103783823822}
   m_Layer: 0
-  m_Name: Chest
+  m_Name: Rune3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6557702526871457491
+--- !u!4 &1228458169804916526
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3688409965358433479}
+  m_GameObject: {fileID: 8402412884061235969}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 185.47887, y: 310.63074, z: 0}
+  m_LocalPosition: {x: 167.83583, y: 287.9775, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &8489920639826015958
+--- !u!212 &5684455755248725530
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3688409965358433479}
+  m_GameObject: {fileID: 8402412884061235969}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -82,64 +82,31 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 0.6509434, g: 0.20572266, b: 0.22183459, a: 1}
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.5803922, g: 0, b: 0.8274511, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.16, y: 0.16}
+  m_Size: {x: 0.2, y: 0.2}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &8276540668661123389
+--- !u!114 &2492819103783823822
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3688409965358433479}
+  m_GameObject: {fileID: 8402412884061235969}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 272e923e4b47467408166493ed05484f, type: 3}
+  m_Script: {fileID: 11500000, guid: 7e80e661bc6312d4f9613b36b6154476, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Interactables.Chest
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Interactables.CurrencyNode
   _size: {x: 1, y: 1}
-  _maxHp: 40
-  _renderer: {fileID: 8489920639826015958}
-  _drops:
-  - kind: 0
-    currency: 0
-    amount: {x: 4, y: 10}
-    weight: 35
-  - kind: 0
-    currency: 1
-    amount: {x: 2, y: 6}
-    weight: 20
-  - kind: 0
-    currency: 2
-    amount: {x: 1, y: 3}
-    weight: 10
-  - kind: 0
-    currency: 3
-    amount: {x: 1, y: 3}
-    weight: 10
-  - kind: 0
-    currency: 4
-    amount: {x: 1, y: 3}
-    weight: 10
-  - kind: 1
-    currency: 0
-    amount: {x: 2, y: 5}
-    weight: 15
-  _swordTable:
-  - rarity: 0
-    weight: 50
-  - rarity: 1
-    weight: 30
-  - rarity: 2
-    weight: 14
-  - rarity: 3
-    weight: 5
-  - rarity: 4
-    weight: 1
+  _maxHp: 25
+  _currency: 0
+  _minAmount: 1
+  _maxAmount: 3
+  _renderer: {fileID: 5684455755248725530}

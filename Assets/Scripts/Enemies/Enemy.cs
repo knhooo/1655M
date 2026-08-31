@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Game.Map;
 using Game.Player;
+using Game.Economy;
 
 namespace Game.Enemies
 {
@@ -22,9 +23,11 @@ namespace Game.Enemies
         [SerializeField] private SpriteRenderer _renderer;
 
         [Header("사망 보상 (임시)")]
-        [SerializeField] private int _goldReward = 1;
+        [Tooltip("처치 시 지급할 Coin (min~max).")]
+        [SerializeField, Min(0)] private int _coinRewardMin = 1;
+        [SerializeField, Min(0)] private int _coinRewardMax = 2;
 
-        /// <summary>사망 시: (앵커 col, 앵커 row, 골드 보상). 드롭/점수 처리용.</summary>
+        /// <summary>사망 시: (앵커 col, 앵커 row, 지급한 Coin). 점수/연출용.</summary>
         public event Action<int, int, int> Killed;
 
         private int _hp;
@@ -55,7 +58,9 @@ namespace Game.Enemies
 
             if (_hp <= 0)
             {
-                Killed?.Invoke(AnchorCol, AnchorRow, _goldReward);
+                int coin = UnityEngine.Random.Range(_coinRewardMin, Mathf.Max(_coinRewardMin, _coinRewardMax) + 1);
+                RunWallet.Instance?.Add(CurrencyType.Coin, coin);
+                Killed?.Invoke(AnchorCol, AnchorRow, coin);
                 Map.ClearEntity(this); // 풋프린트 정리 + 풀 반납
                 return true;
             }

@@ -124,13 +124,23 @@ namespace Game.UI
             CurrencyCost cost = PlayerStats.GetCost(_selected);
             if (_nameText != null) _nameText.text = PlayerStats.DisplayName(_selected);
             if (_levelText != null) _levelText.text = $"Lv.{PlayerStats.GetLevel(_selected)}";
-            if (_costText != null) _costText.text = $"Coin {cost.Coin} / Gold {cost.Gold}";
-            if (_upgradeButton != null)
-            {
-                _upgradeButton.interactable =
-                    GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
-                    && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
-            }
+            if (_costText != null) _costText.text = BuildCostText(cost);
+            if (_upgradeButton != null) _upgradeButton.interactable = PlayerStats.CanAfford(cost);
         }
+
+        private static string BuildCostText(CurrencyCost cost)
+        {
+            _sb.Clear();
+            bool first = true;
+            foreach ((CurrencyType type, int amount) in cost.Entries())
+            {
+                if (!first) _sb.Append("  /  ");
+                _sb.Append(type.DisplayName()).Append(' ').Append(amount);
+                first = false;
+            }
+            return _sb.ToString();
+        }
+
+        private static readonly System.Text.StringBuilder _sb = new System.Text.StringBuilder(64);
     }
 }

@@ -66,9 +66,16 @@ namespace Game.Interactables
             {
                 return;
             }
-            Color hi = _currency == CurrencyType.Coin
-                ? new Color(0.78f, 0.80f, 0.85f)   // Coin = 은빛
-                : new Color(0.95f, 0.80f, 0.28f);   // Gold = 금빛
+            Color hi;
+            switch (_currency)
+            {
+                case CurrencyType.Coin: hi = new Color(0.78f, 0.80f, 0.85f); break; // 은빛
+                case CurrencyType.Gold: hi = new Color(0.95f, 0.80f, 0.28f); break; // 금빛
+                case CurrencyType.Rune1: hi = new Color(0.55f, 0.80f, 1f); break;   // 파랑
+                case CurrencyType.Rune2: hi = new Color(0.60f, 1f, 0.60f); break;   // 초록
+                case CurrencyType.Rune3: hi = new Color(1f, 0.55f, 0.85f); break;   // 분홍
+                default: hi = Color.white; break;
+            }
             Color lo = hi * 0.5f;
             _renderer.color = new Color(
                 Mathf.Lerp(lo.r, hi.r, t),
