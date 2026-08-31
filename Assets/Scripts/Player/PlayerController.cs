@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Game.Map;
+using Game.UI;
 
 namespace Game.Player
 {
@@ -19,6 +20,8 @@ namespace Game.Player
         [SerializeField] private MapGenerator _map;
         [Tooltip("InputSystem_Actions 에셋 (Player 맵의 Move 사용).")]
         [SerializeField] private InputActionAsset _inputActions;
+        [Tooltip("HUD 가상 조이스틱. 있으면 눌린 동안 키보드 대신 이걸 읽음.")]
+        [SerializeField] private VirtualJoystick _joystick;
 
         [Header("Spawn")]
         [SerializeField] private int _startColumn = 4;
@@ -37,7 +40,7 @@ namespace Game.Player
 
         [Header("Debug")]
         [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그).")]
-        [SerializeField] private bool _showDebugHud = true;
+        [SerializeField] private bool _showDebugHud = false;
 
         // 이벤트 ----------------------------------------------------------
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
@@ -229,12 +232,17 @@ namespace Game.Player
 
         private void HandleMoveInput()
         {
-            if (_moveAction == null)
+            if (_moveAction == null && _joystick == null)
             {
                 return;
             }
 
-            Vector2 raw = _moveAction.ReadValue<Vector2>();
+            Vector2 raw = _moveAction != null ? _moveAction.ReadValue<Vector2>() : Vector2.zero;
+            if (_joystick != null && _joystick.IsActive)
+            {
+                raw = _joystick.Value; // 조이스틱 누르는 동안 우선
+            }
+
             if (raw.sqrMagnitude < 0.25f)
             {
                 return;
