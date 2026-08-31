@@ -35,7 +35,6 @@ namespace Game.Interactables
 
         [Header("Chest")]
         [SerializeField] private int _maxHp = 40;
-        [SerializeField] private SpriteRenderer _renderer;
 
         [Tooltip("이 중 가중치로 하나만 지급.")]
         [SerializeField]
@@ -65,18 +64,9 @@ namespace Game.Interactables
 
         private int _hp;
 
-        private void Reset()
-        {
-            _renderer = GetComponent<SpriteRenderer>();
-        }
-
         protected override void OnPlaced()
         {
             _hp = Mathf.Max(1, _maxHp);
-            if (_renderer != null)
-            {
-                _renderer.color = new Color(0.72f, 0.52f, 0.26f);
-            }
         }
 
         public override bool ApplyDamage(int amount)
@@ -89,10 +79,7 @@ namespace Game.Interactables
             _hp -= amount;
             if (_hp > 0)
             {
-                if (_renderer != null)
-                {
-                    _renderer.color = new Color(0.55f, 0.40f, 0.20f); // 금 간 상자
-                }
+                // TODO: 금 간 스프라이트 / 히트 플래시
                 return false;
             }
 

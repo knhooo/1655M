@@ -20,7 +20,6 @@ namespace Game.Enemies
         [SerializeField] private int _contactDamage = 20;
         [Tooltip("접촉 피해 재적용 간격(초).")]
         [SerializeField] private float _contactInterval = 0.8f;
-        [SerializeField] private SpriteRenderer _renderer;
 
         [Header("사망 보상 (임시)")]
         [Tooltip("처치 시 지급할 Coin (min~max).")]
@@ -33,16 +32,10 @@ namespace Game.Enemies
         private int _hp;
         private float _contactCooldown;
 
-        private void Reset()
-        {
-            _renderer = GetComponent<SpriteRenderer>();
-        }
-
         protected override void OnPlaced()
         {
             _hp = Mathf.Max(1, _maxHp);
             _contactCooldown = 0f;
-            RefreshVisual();
         }
 
         public override bool ApplyDamage(int amount)
@@ -53,7 +46,6 @@ namespace Game.Enemies
             }
 
             _hp -= amount;
-            RefreshVisual();
             // TODO: 히트 플래시 / 넉백 불가 표시 / 사운드
 
             if (_hp <= 0)
@@ -110,19 +102,6 @@ namespace Game.Enemies
                 }
             }
             return false;
-        }
-
-        private void RefreshVisual()
-        {
-            if (_renderer == null)
-            {
-                return;
-            }
-            float t = _maxHp > 0 ? Mathf.Clamp01((float)_hp / _maxHp) : 1f;
-            // 남은 HP 낮을수록 어둡게. 임시 색(붉은 계열).
-            Color hi = new Color(0.85f, 0.25f, 0.22f);
-            Color lo = new Color(0.35f, 0.10f, 0.10f);
-            _renderer.color = Color.Lerp(lo, hi, t);
         }
     }
 }

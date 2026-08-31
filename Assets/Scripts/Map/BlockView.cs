@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Game.Map
@@ -5,11 +6,22 @@ namespace Game.Map
     /// <summary>
     /// 풀링되는 지층 블록 1칸의 시각 표현.
     /// 스스로 상태를 갖지 않고, <see cref="MapGenerator"/>가 넘겨주는 <see cref="BlockData"/>를 따른다.
+    /// 지층 타입별 스프라이트는 <see cref="_typeSprites"/> 에 등록 (프리팹 하나로 전 타입 처리).
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     public class BlockView : MonoBehaviour
     {
+        [Serializable]
+        private struct TypeSprite
+        {
+            public StrataType type;
+            public Sprite sprite;
+        }
+
         [SerializeField] private SpriteRenderer _renderer;
+
+        [Header("지층 타입별 스프라이트")]
+        [SerializeField] private TypeSprite[] _typeSprites;
 
         public int Col { get; private set; }
         public int Row { get; private set; }
@@ -32,7 +44,7 @@ namespace Game.Map
         public void OnDamaged(BlockData data)
         {
             Refresh(data);
-            // TODO: 크랙 스프라이트 단계 표시 / 히트 플래시 / 흔들림
+            // TODO: 크랙 스프라이트 단계 / 히트 플래시
         }
 
         private void Refresh(BlockData data)
@@ -42,18 +54,26 @@ namespace Game.Map
                 return;
             }
 
-            // TODO: StrataType 별 스프라이트로 교체. 임시로 색만.
-            Color baseColor = data.Type switch
+            Sprite s = SpriteFor(data.Type);
+            if (s != null)
             {
-                StrataType.Soil => new Color(0.52f, 0.38f, 0.26f),
-                StrataType.Rock => new Color(0.42f, 0.44f, 0.48f),
-                StrataType.Ore  => new Color(0.30f, 0.55f, 0.62f),
-                _ => Color.magenta,
-            };
+                _renderer.sprite = s;
+            }
+        }
 
-            // 피해를 받을수록 어둡게 (남은 HP 비율).
-            float wear = Mathf.Lerp(0.55f, 1f, data.HpNormalized);
-            _renderer.color = new Color(baseColor.r * wear, baseColor.g * wear, baseColor.b * wear, 1f);
+        private Sprite SpriteFor(StrataType type)
+        {
+            if (_typeSprites != null)
+            {
+                foreach (TypeSprite ts in _typeSprites)
+                {
+                    if (ts.type == type && ts.sprite != null)
+                    {
+                        return ts.sprite;
+                    }
+                }
+            }
+            return null;
         }
     }
 }

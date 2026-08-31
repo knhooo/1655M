@@ -105,3 +105,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Map.BlockView
   _renderer: {fileID: 5654901857543417046}
+  _typeSprites:
+  - type: 1
+    sprite: {fileID: 7421218225407433232, guid: c3c304333efec37409bf2f973f657d65, type: 3}
+  - type: 2
+    sprite: {fileID: 8486786076564984107, guid: c3c304333efec37409bf2f973f657d65, type: 3}
+  - type: 3
+    sprite: {fileID: -8887993299131670151, guid: c3c304333efec37409bf2f973f657d65, type: 3}
+  _tintByType: 1
+  _darkenByDamage: 1
