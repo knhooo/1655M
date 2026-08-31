@@ -50,6 +50,11 @@ namespace Game.Map
         [SerializeField] private int _rockHp = 45;
         [SerializeField] private int _oreHp = 95;
 
+        [Header("Strata 접촉 피해 (지층 = 기본 적. 인접 시 플레이어가 받는 피해)")]
+        [SerializeField] private int _soilContactDamage = 5;
+        [SerializeField] private int _rockContactDamage = 16;
+        [SerializeField] private int _oreContactDamage = 27;
+
         [Header("Strata 층 (깊이대별 단일 지층 - 임시 값)")]
         [Tooltip("맨 위 빈 지표 행 수. 이 아래부터 첫 번째 층이 시작.")]
         [SerializeField] private int _surfaceRows = 1;
@@ -501,6 +506,40 @@ namespace Game.Map
             }
             return _rows.TryGetValue(row, out MapRow r)
                    && (r.Cells[col].IsSolid || r.Entities[col] != null);
+        }
+
+        /// <summary>
+        /// 이 칸의 지층이 인접 시 플레이어에게 주는 접촉 피해. 빈 칸/엔티티 칸/범위 밖은 0.
+        /// (지층 자체가 "기본 적". 격자 엔티티(<see cref="GridEntity"/>)는 자체적으로 피해를 처리한다.)
+        /// </summary>
+        public int ContactDamageAt(int col, int row)
+        {
+            if (col < 0 || col >= Columns || row < 0)
+            {
+                return 0;
+            }
+            if (!_rows.TryGetValue(row, out MapRow r))
+            {
+                return 0;
+            }
+            if (r.Entities[col] != null)
+            {
+                return 0;
+            }
+
+            BlockData b = r.Cells[col];
+            if (!b.IsSolid)
+            {
+                return 0;
+            }
+
+            switch (b.Type)
+            {
+                case StrataType.Rock: return _rockContactDamage;
+                case StrataType.Ore: return _oreContactDamage;
+                case StrataType.Soil: return _soilContactDamage;
+                default: return 0;
+            }
         }
 
         /// <summary>이 칸에 엔티티(적/아이템)가 있으면 반환. 없으면 null.</summary>

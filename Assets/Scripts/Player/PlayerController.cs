@@ -192,7 +192,34 @@ namespace Game.Player
             _row = below;
             BeginAnimation(_map.CellToWorld(_col, _row), _fallDuration);
             CellChanged?.Invoke(_col, _row);
+            CheckContactDamage();
             return true;
+        }
+
+        // ------------------------------------------------------------------
+        // 접촉 피해 (지층 = 기본 적. 좌·우·아래 인접 지층에서 이동 시마다 1회)
+        // ------------------------------------------------------------------
+
+        private void CheckContactDamage()
+        {
+            if (_map == null || !IsAlive)
+            {
+                return;
+            }
+
+            ApplyContactFrom(_col - 1, _row);       // 좌
+            if (IsAlive) ApplyContactFrom(_col + 1, _row);  // 우
+            if (IsAlive) ApplyContactFrom(_col, _row + 1);  // 아래
+        }
+
+        private void ApplyContactFrom(int col, int row)
+        {
+            int dmg = _map.ContactDamageAt(col, row);
+            if (dmg > 0)
+            {
+                Damage(dmg);
+                // TODO: 방향별 피격 연출 / 넉백 / 사운드
+            }
         }
 
         // ------------------------------------------------------------------
@@ -249,6 +276,7 @@ namespace Game.Player
             BeginAnimation(_map.CellToWorld(_col, _row), _stepDuration);
             _actionTimer = _stepInterval;
             CellChanged?.Invoke(_col, _row);
+            CheckContactDamage();
         }
 
         /// <summary>입력 벡터를 5방향 중 하나로 양자화. 위쪽/무효면 false.</summary>
@@ -341,6 +369,7 @@ namespace Game.Player
                     _row = tr;
                     BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
                     CellChanged?.Invoke(_col, _row);
+                    CheckContactDamage();
 
                     while (_isAnimating)
                     {
