@@ -125,6 +125,13 @@ namespace Game.Map
         [SerializeField, Range(0f, 0.1f)] private float _formationDensity = 0.015f;
         [SerializeField] private FormationSpawn[] _formationTable;
 
+        [Header("Boss")]
+        [Tooltip("보스 프리팹 (루트에 GridEntity, Size 9x9).")]
+        [SerializeField] private GameObject _bossPrefab;
+        [Tooltip("이 행에 보스가 1회 등장 (0 = 없음).")]
+        [SerializeField] private int _bossRow = 40;
+        private bool _bossSpawned;
+
         // 이벤트 -----------------------------------------------------------
         /// <summary>블록이 완전히 파괴됐을 때: (col, row, 파괴된 블록 데이터).</summary>
         public event Action<int, int, BlockData> BlockDestroyed;
@@ -233,6 +240,12 @@ namespace Game.Map
 
             var mapRow = new MapRow();
             _rows.Add(row, mapRow);
+
+            // 보스 행이면 이 행을 통째로 보스가 채운다 (col 루프는 남은 칸을 건너뜀)
+            if (!_bossSpawned && _bossRow > 0 && row == _bossRow)
+            {
+                TrySpawnBoss(mapRow, row);
+            }
 
             for (int col = 0; col < Columns; col++)
             {
@@ -470,6 +483,23 @@ namespace Game.Map
                 PlaceFormationMember(prefab, cc, rr, row, mapRow);
             }
             return true;
+        }
+
+        private void TrySpawnBoss(MapRow mapRow, int row)
+        {
+            if (_bossPrefab == null)
+            {
+                return;
+            }
+            GridEntity prefab = _bossPrefab.GetComponent<GridEntity>();
+            if (prefab == null)
+            {
+                Debug.LogWarning("[MapGenerator] _bossPrefab 루트에 GridEntity 없음", this);
+                return;
+            }
+            _bossSpawned = true;
+            SpawnEntity(prefab, prefab.Size, 0, row, mapRow); // 앵커 col 0, Size(9,9) 가정
+            Debug.Log($"[MapGenerator] 보스 등장 @ row {row}", this);
         }
 
         private FormationSpawn PickFormation(int row, float t)

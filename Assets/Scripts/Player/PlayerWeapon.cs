@@ -46,6 +46,8 @@ namespace Game.Player
         [SerializeField] private float _effectEndScale = 1.15f;
         [Tooltip("이펙트 스프라이트가 기본에서 가리키는 방향을 오른쪽(+X)으로 맞추는 각도.")]
         [SerializeField] private float _effectForwardOffset = 0f;
+        [Tooltip("이펙트를 공격 방향으로 이 거리만큼 밀어서 스폰. 0이면 배치한 위치 그대로.")]
+        [SerializeField] private float _effectRadius = 0f;
         [Tooltip("이펙트를 페이드아웃할지.")]
         [SerializeField] private bool _effectFade = true;
 
@@ -60,6 +62,7 @@ namespace Game.Player
         private Quaternion _homeRot;
         private bool _homeFlipY;
         private float _radius = 0.9f;
+        private Vector3 _effectHomePos;
 
         private void Awake()
         {
@@ -76,6 +79,7 @@ namespace Game.Player
 
             if (_effect != null)
             {
+                _effectHomePos = _effect.transform.localPosition;
                 _effect.enabled = false;
             }
         }
@@ -211,6 +215,20 @@ namespace Game.Player
                 _effect.sprite = _effectSprite;
             }
             _effect.flipY = faceLeft;
+
+            if (_effectRadius > 0f)
+            {
+                float rad = center * Mathf.Deg2Rad;
+                _effect.transform.localPosition = new Vector3(
+                    Mathf.Cos(rad) * _effectRadius,
+                    Mathf.Sin(rad) * _effectRadius,
+                    _effectHomePos.z);
+            }
+            else
+            {
+                _effect.transform.localPosition = _effectHomePos;
+            }
+
             _effect.transform.localRotation = Quaternion.Euler(0f, 0f, center + _effectForwardOffset);
             _effect.enabled = true;
             StartCoroutine(EffectRoutine());

@@ -17,7 +17,7 @@ MonoBehaviour:
     sprite: {fileID: -3846989261494495056, guid: c3c304333efec37409bf2f973f657d65, type: 3}
     effect: {fileID: 316400062676456750, guid: 6e21636a9b8de224fa58956a987768ce, type: 3}
     spriteScale: 1
-    effectScale: 1
+    effectScale: 0.5
   - rarity: 1
     sprite: {fileID: -8592424096107761443, guid: c3c304333efec37409bf2f973f657d65, type: 3}
     effect: {fileID: 1494717266108852402, guid: 9a826acdde7a7ff4995291fb330e673c, type: 3}
@@ -32,11 +32,11 @@ MonoBehaviour:
     sprite: {fileID: -2402063034215647507, guid: c3c304333efec37409bf2f973f657d65, type: 3}
     effect: {fileID: 8888461806267099605, guid: 5db1d1bc05df14d4eb5319b2319c08b9, type: 3}
     spriteScale: 3
-    effectScale: 1
+    effectScale: 3
   - rarity: 4
     sprite: {fileID: 902773042312827701, guid: c3c304333efec37409bf2f973f657d65, type: 3}
     effect: {fileID: 8888461806267099605, guid: 5db1d1bc05df14d4eb5319b2319c08b9, type: 3}
     spriteScale: 5
-    effectScale: 1
+    effectScale: 5
   _fallback: {fileID: 0}
   _fallbackEffect: {fileID: 0}
