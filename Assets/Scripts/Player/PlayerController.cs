@@ -490,8 +490,7 @@ namespace Game.Player
                 }
             }
 
-            ShockwaveFired?.Invoke(_col, _row, radius);
-            // TODO: 히트스톱 / 카메라 흔들림 / 사운드
+            ShockwaveFired?.Invoke(_col, _row, radius); // 히트스톱/흔들림은 JuiceDirector 가 처리
         }
 
         // ------------------------------------------------------------------
