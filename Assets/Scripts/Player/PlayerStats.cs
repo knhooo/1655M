@@ -6,12 +6,22 @@ using Game.Flow;
 
 namespace Game.Player
 {
+    /// <summary>강화 가능한 항목.</summary>
+    public enum UpgradeKind
+    {
+        Damage = 0,
+        Armor = 1,   // 최대 HP
+        Skill1 = 2,
+        Skill2 = 3,
+        Skill3 = 4,
+    }
+
     /// <summary>
-    /// 플레이어 유효 스탯 = 기본값 + Status 업그레이드(골드 소모) + 장착 검(치명타 확률).
+    /// 플레이어 유효 스탯 = 기본값 + 강화(Coin·Gold 소모) + 장착 검(치명타 확률).
     /// <see cref="PlayerPrefs"/> 로 영속. 런 시작 시 <see cref="PlayerController"/> 가 읽어 캐시한다.
     ///
+    /// 강화는 항목별 Lv 0 부터 시작(추가치 없음), 무한, 비용 선형(레벨당 Coin/Gold +1).
     /// 기본값(임시): 대미지 17 · 최대 HP 500 · 치명타 확률 5% · 치명타 배수 2배.
-    /// 검 등급별 치명타 확률: Normal +5 / Unique +10 / Legendary +15 / Super +20 / Ultimate +25.
     /// </summary>
     public static class PlayerStats
     {
@@ -24,39 +34,91 @@ namespace Game.Player
         public const float BaseCritChance = 5f;   // %
         public const float CritMultiplier = 2f;
 
-        // ---- Status 업그레이드 ----
         public const float DamagePerLevel = 2f;
         public const int HpPerLevel = 25;
 
-        private const string DmgLevelKey = "status_dmg_lv";
-        private const string HpLevelKey = "status_hp_lv";
         private const string EquippedSwordKey = "equipped_sword"; // -1 = 없음/자동
 
-        public static int DamageLevel => Mathf.Max(0, PlayerPrefs.GetInt(DmgLevelKey, 0));
-        public static int HpLevel => Mathf.Max(0, PlayerPrefs.GetInt(HpLevelKey, 0));
+        // ------------------------------------------------------------------
+        // 강화 (통합 API)
+        // ------------------------------------------------------------------
 
-        // 다음 레벨 비용 (재화 2종 모두 소모). 레벨이 오를수록 증가.
-        // 레벨 0→1: (1,1) / 1→2: (2,2) / ... (임시 곡선)
-        public static CurrencyCost DamageUpgradeCost => new CurrencyCost(DamageLevel + 1, DamageLevel + 1);
-        public static CurrencyCost HpUpgradeCost => new CurrencyCost(HpLevel + 1, HpLevel + 1);
+        private static string LevelKey(UpgradeKind k) => "upg_lv_" + (int)k;
 
-        // ---- 계산된 스탯 ----
-        public static int Damage => Mathf.RoundToInt(BaseDamage + DamageLevel * DamagePerLevel);
-        public static int MaxHp => BaseMaxHp + HpLevel * HpPerLevel;
+        public static int GetLevel(UpgradeKind k) => Mathf.Max(0, PlayerPrefs.GetInt(LevelKey(k), 0));
+
+        /// <summary>다음 레벨 비용. (임시: 선형)</summary>
+        public static CurrencyCost GetCost(UpgradeKind k)
+        {
+            int lv = GetLevel(k);
+            return new CurrencyCost(lv + 1, lv + 1);
+        }
+
+        public static bool CanAfford(CurrencyCost cost)
+        {
+            return GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
+                && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
+        }
+
+        public static bool TryUpgrade(UpgradeKind k)
+        {
+            CurrencyCost cost = GetCost(k);
+            if (!CanAfford(cost))
+            {
+                return false;
+            }
+            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
+            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
+            PlayerPrefs.SetInt(LevelKey(k), GetLevel(k) + 1);
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+            return true;
+        }
+
+        public static string DisplayName(UpgradeKind k)
+        {
+            switch (k)
+            {
+                case UpgradeKind.Damage: return "Damage";
+                case UpgradeKind.Armor: return "Armor";
+                case UpgradeKind.Skill1: return "Skill 1";
+                case UpgradeKind.Skill2: return "Skill 2";
+                case UpgradeKind.Skill3: return "Skill 3";
+                default: return k.ToString();
+            }
+        }
+
+        /// <summary>스킬 슬롯(0~2)의 강화 레벨. 스킬 컴포넌트가 효과 계산에 사용.</summary>
+        public static int SkillLevel(int slot)
+        {
+            switch (slot)
+            {
+                case 0: return GetLevel(UpgradeKind.Skill1);
+                case 1: return GetLevel(UpgradeKind.Skill2);
+                case 2: return GetLevel(UpgradeKind.Skill3);
+                default: return 0;
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 계산된 스탯
+        // ------------------------------------------------------------------
+
+        public static int Damage => Mathf.RoundToInt(BaseDamage + GetLevel(UpgradeKind.Damage) * DamagePerLevel);
+        public static int MaxHp => BaseMaxHp + GetLevel(UpgradeKind.Armor) * HpPerLevel;
         public static float CritChance => Mathf.Clamp(BaseCritChance + EquippedSwordCritBonus(), 0f, 100f);
 
-        // 강화 시 도달할 값 (UI 미리보기)
-        public static int NextDamage => Mathf.RoundToInt(BaseDamage + (DamageLevel + 1) * DamagePerLevel);
-        public static int NextMaxHp => BaseMaxHp + (HpLevel + 1) * HpPerLevel;
+        // ------------------------------------------------------------------
+        // 장착 검
+        // ------------------------------------------------------------------
 
-        // ---- 장착 검 ----
         /// <summary>장착 중인 검. 명시 안 됐거나 미보유면 보유 중 최고 등급 자동.</summary>
         public static SwordRarity? EquippedSword
         {
             get
             {
                 int raw = PlayerPrefs.GetInt(EquippedSwordKey, -1);
-                if (raw >= 0 && System.Enum.IsDefined(typeof(SwordRarity), raw))
+                if (raw >= 0 && Enum.IsDefined(typeof(SwordRarity), raw))
                 {
                     var r = (SwordRarity)raw;
                     if (IsOwned(r))
@@ -85,47 +147,9 @@ namespace Game.Player
             Changed?.Invoke();
         }
 
-        // ---- 업그레이드 (재화 2종 모두 소모) ----
-        public static bool CanAfford(CurrencyCost cost)
-        {
-            return GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
-                && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
-        }
-
-        public static bool TryUpgradeDamage()
-        {
-            CurrencyCost cost = DamageUpgradeCost;
-            if (!CanAfford(cost))
-            {
-                return false;
-            }
-            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
-            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
-            PlayerPrefs.SetInt(DmgLevelKey, DamageLevel + 1);
-            PlayerPrefs.Save();
-            Changed?.Invoke();
-            return true;
-        }
-
-        public static bool TryUpgradeHp()
-        {
-            CurrencyCost cost = HpUpgradeCost;
-            if (!CanAfford(cost))
-            {
-                return false;
-            }
-            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
-            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
-            PlayerPrefs.SetInt(HpLevelKey, HpLevel + 1);
-            PlayerPrefs.Save();
-            Changed?.Invoke();
-            return true;
-        }
-
-        // ---- 보유 검 조회 ----
         private static bool IsOwned(SwordRarity r)
         {
-            return System.Array.IndexOf(RunInventory.GetOwnedSwords(), r) >= 0;
+            return Array.IndexOf(RunInventory.GetOwnedSwords(), r) >= 0;
         }
 
         private static SwordRarity? HighestOwnedSword()
