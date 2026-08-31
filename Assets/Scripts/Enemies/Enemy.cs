@@ -29,6 +29,11 @@ namespace Game.Enemies
         /// <summary>사망 시: (앵커 col, 앵커 row, 지급한 Coin). 점수/연출용.</summary>
         public event Action<int, int, int> Killed;
 
+        /// <summary>HP 가 바뀔 때: (현재 HP, 최대 HP). HP 바 등 표시용. 배치 시 최대치로도 발생.</summary>
+        public event Action<int, int> HealthChanged;
+
+        public int MaxHp => Mathf.Max(1, _maxHp);
+
         private int _hp;
         private float _contactCooldown;
 
@@ -36,6 +41,7 @@ namespace Game.Enemies
         {
             _hp = Mathf.Max(1, _maxHp);
             _contactCooldown = 0f;
+            HealthChanged?.Invoke(_hp, MaxHp);
         }
 
         public override bool ApplyDamage(int amount)
@@ -46,6 +52,7 @@ namespace Game.Enemies
             }
 
             _hp -= amount;
+            HealthChanged?.Invoke(Mathf.Max(0, _hp), MaxHp);
             // TODO: 히트 플래시 / 넉백 불가 표시 / 사운드
 
             if (_hp <= 0)
