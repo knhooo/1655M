@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.UI;
 
 namespace Game.Flow
 {
@@ -30,6 +31,8 @@ namespace Game.Flow
         [SerializeField] private Tab[] _tabs;
         [Tooltip("타이틀로 돌아가기. 선택.")]
         [SerializeField] private Button _backButton;
+        [Tooltip("재화 라벨 묶음. 패널 상단에 CurrencyDisplay(Source=Total) 하나 붙이고 연결.")]
+        [SerializeField] private CurrencyDisplay _currencyDisplay;
 
         [Header("Slide")]
         [Tooltip("숨길 때 위로 이동시킬 거리(px). 0 이면 패널 높이 + 200 자동.")]
@@ -85,6 +88,10 @@ namespace Game.Flow
         public void SlideIn()
         {
             CloseAllTabs(); // 열 때는 아무 탭도 선택 안 됨 - 버튼을 눌러야 페이지가 뜸
+            if (_currencyDisplay != null)
+            {
+                _currencyDisplay.Refresh(); // 뱅킹 직후 등 이벤트로 못 잡는 변화 반영
+            }
             StartSlide(_shownPos);
         }
 

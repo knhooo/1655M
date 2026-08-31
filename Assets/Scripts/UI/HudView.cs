@@ -7,7 +7,7 @@ namespace Game.UI
 {
     /// <summary>
     /// 인게임 HUD. 맨 위 = 현재 심도(m, 1행 = 1m), 그 아래 = HP 가로 바.
-    /// 재화 표시는 <see cref="CurrencyText"/> (Source = Run) 을 각 라벨에 붙여서 처리.
+    /// 재화 표시는 <see cref="CurrencyDisplay"/> (Source = Run) 하나로 처리.
     /// </summary>
     public class HudView : MonoBehaviour
     {

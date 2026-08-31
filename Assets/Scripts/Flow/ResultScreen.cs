@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using Game.UI;
 
 namespace Game.Flow
 {
@@ -16,6 +17,8 @@ namespace Game.Flow
         [SerializeField] private CanvasGroup _group;
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _bestText;
+        [Tooltip("이번 런에서 얻은 재화. CurrencyDisplay(Source=Run) 하나 붙이고 연결.")]
+        [SerializeField] private CurrencyDisplay _rewardDisplay;
         [Tooltip("신기록일 때만 켜지는 오브젝트. 선택.")]
         [SerializeField] private GameObject _newBestBadge;
 
@@ -43,15 +46,20 @@ namespace Game.Flow
 
             if (_scoreText != null)
             {
-                _scoreText.text = $"이번 심도\n{depth} m";
+                _scoreText.text = $"Score\n{depth} m";
             }
             if (_bestText != null)
             {
-                _bestText.text = $"최고 심도\n{bestDepth} m";
+                _bestText.text = $"Best Score\n{bestDepth} m";
             }
             if (_newBestBadge != null)
             {
                 _newBestBadge.SetActive(newBest);
+            }
+
+            if (_rewardDisplay != null)
+            {
+                _rewardDisplay.Refresh();
             }
 
             Debug.Log($"[ResultScreen] Show d={depth} best={bestDepth} newBest={newBest}", this);

@@ -5,7 +5,7 @@ using Game.Flow;
 namespace Game.Economy
 {
     /// <summary>
-    /// 이번 런에서 모은 재화 2종. 씬 리로드마다 0 에서 시작.
+    /// 이번 런에서 모은 재화. 씬 리로드마다 0 에서 시작.
     /// 사망 시 <see cref="GameManager.EndRun"/> 에서 <see cref="BankToTotal"/> 로 영구 재화에 적립.
     /// 항상 활성인 오브젝트에 붙일 것.
     /// </summary>
