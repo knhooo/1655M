@@ -46,6 +46,7 @@ namespace Game.Player
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
         public event Action<int, int, BlockData> Dug;       // (col, row, 파괴 전 데이터) 채굴 시도
         public event Action<int, bool> HitDealt;            // (피해량, 치명타 여부) 타격 시
+        public event Action<int, int> Attacked;            // (dCol, dRow) 근접 타격 방향 - 공격 애니메이션용
         public event Action<int> HpChanged;                 // 현재 HP
         public event Action<int> MaxHpChanged;              // 최대 HP (런 시작 시)
         public event Action<int, Vector3> DamageTaken;      // (받은 피해량, 피해원 월드 위치)
@@ -330,6 +331,7 @@ namespace Game.Player
                 {
                     Dug?.Invoke(tc, tr, before);
                 }
+                Attacked?.Invoke(dc, dr);
                 _actionTimer = _digInterval;
                 return;
             }

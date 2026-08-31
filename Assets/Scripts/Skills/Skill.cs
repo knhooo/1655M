@@ -17,6 +17,8 @@ namespace Game.Skills
         [SerializeField, Range(0, 2)] private int _slot = 0;
         [SerializeField] private string _displayName = "Skill";
         [SerializeField] private Sprite _icon;
+        [Tooltip("발동 시 플레이어 위치에 잠깐 뜨는 이펙트 스프라이트. 선택.")]
+        [SerializeField] private Sprite _castEffect;
         [SerializeField, Min(0f)] private float _cooldown = 5f;
 
         /// <summary>SkillSystem 슬롯 · 단축키 인덱스 · 강화 항목(<see cref="PlayerStats.SkillLevel"/>).</summary>
@@ -30,6 +32,7 @@ namespace Game.Skills
 
         public string DisplayName => _displayName;
         public Sprite Icon => _icon;
+        public Sprite CastEffect => _castEffect;
         public float Cooldown => _cooldown;
         public float CooldownRemaining { get; private set; }
 

@@ -50,6 +50,25 @@ namespace Game.Map
                    row >= AnchorRow && row < AnchorRow + s.y;
         }
 
+        /// <summary>플레이어가 점유 칸에 인접(맨해튼 거리 ≤ 1)하거나 겹쳤는가.</summary>
+        protected bool IsPlayerAdjacent(int pcol, int prow)
+        {
+            Vector2Int s = Size;
+            for (int dx = 0; dx < s.x; dx++)
+            {
+                for (int dy = 0; dy < s.y; dy++)
+                {
+                    int c = AnchorCol + dx;
+                    int r = AnchorRow + dy;
+                    if (Mathf.Abs(c - pcol) + Mathf.Abs(r - prow) <= 1)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         // IDamageable
         public bool TakeDamage(int amount) => ApplyDamage(amount);
 

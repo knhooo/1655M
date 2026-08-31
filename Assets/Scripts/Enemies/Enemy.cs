@@ -91,24 +91,5 @@ namespace Game.Enemies
                 _contactCooldown = _contactInterval;
             }
         }
-
-        private bool IsPlayerAdjacent(int pcol, int prow)
-        {
-            Vector2Int s = Size;
-            for (int dx = 0; dx < s.x; dx++)
-            {
-                for (int dy = 0; dy < s.y; dy++)
-                {
-                    int c = AnchorCol + dx;
-                    int r = AnchorRow + dy;
-                    int manhattan = Mathf.Abs(c - pcol) + Mathf.Abs(r - prow);
-                    if (manhattan <= 1) // 인접(상하좌우) 또는 겹침
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
     }
 }

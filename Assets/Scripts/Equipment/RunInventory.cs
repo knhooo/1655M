@@ -12,7 +12,17 @@ namespace Game.Equipment
     {
         public static RunInventory Instance { get; private set; }
 
-        private const string OwnedKey = "owned_swords"; // 쉼표로 이은 SwordRarity 정수값
+        private const string OwnedKey = "owned_swords";      // 쉼표로 이은 SwordRarity 정수값
+        private const string UnlockAllKey = "debug_unlock_all_swords"; // 테스트: 1이면 전 등급 보유
+
+        /// <summary>테스트용. 켜면 모든 등급 검을 보유한 것으로 취급.</summary>
+        public static bool AllUnlocked
+        {
+            get => PlayerPrefs.GetInt(UnlockAllKey, 0) == 1;
+            set { PlayerPrefs.SetInt(UnlockAllKey, value ? 1 : 0); PlayerPrefs.Save(); }
+        }
+
+        private static SwordRarity[] AllRarities => (SwordRarity[])Enum.GetValues(typeof(SwordRarity));
 
         private readonly List<SwordRarity> _found = new();
 
@@ -67,9 +77,14 @@ namespace Game.Equipment
             PlayerPrefs.Save();
         }
 
-        /// <summary>영구 보유 중인 검 등급 목록.</summary>
+        /// <summary>영구 보유 중인 검 등급 목록. (<see cref="AllUnlocked"/> 면 전 등급)</summary>
         public static SwordRarity[] GetOwnedSwords()
         {
+            if (AllUnlocked)
+            {
+                return AllRarities;
+            }
+
             string raw = PlayerPrefs.GetString(OwnedKey, string.Empty);
             if (string.IsNullOrEmpty(raw))
             {

@@ -198,6 +198,21 @@ namespace Game.Player
             PlayerPrefs.Save();
             Debug.Log("[PlayerStats] 진행 데이터 초기화");
         }
+
+        [UnityEditor.MenuItem("1655M/Debug: All Swords Unlocked")]
+        private static void ToggleAllSwordsUnlocked()
+        {
+            RunInventory.AllUnlocked = !RunInventory.AllUnlocked;
+            Changed?.Invoke();
+            Debug.Log($"[PlayerStats] All Swords Unlocked = {RunInventory.AllUnlocked}");
+        }
+
+        [UnityEditor.MenuItem("1655M/Debug: All Swords Unlocked", true)]
+        private static bool ToggleAllSwordsUnlockedValidate()
+        {
+            UnityEditor.Menu.SetChecked("1655M/Debug: All Swords Unlocked", RunInventory.AllUnlocked);
+            return true;
+        }
 #endif
     }
 }
