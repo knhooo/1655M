@@ -49,6 +49,7 @@ namespace Game.Player
         public event Action<int> HpChanged;                 // 현재 HP
         public event Action<int> MaxHpChanged;              // 최대 HP (런 시작 시)
         public event Action<int, Vector3> DamageTaken;      // (받은 피해량, 피해원 월드 위치)
+        public event Action<bool> ShieldChanged;            // 보호막 on/off
         public event Action Died;
         public event Action DashStarted;
         public event Action DashEnded;
@@ -66,6 +67,8 @@ namespace Game.Player
         public bool IsAlive => _hp > 0;
         public bool IsDashing => _dashing;
         public bool IsBusy => _isAnimating || _dashing;
+        public bool ShieldActive => _shieldTimer > 0f;
+        public float ShieldRemaining => Mathf.Max(0f, _shieldTimer);
 
         private int _col;
         private int _row;
@@ -76,6 +79,8 @@ namespace Game.Player
         private float _critMultiplier;
         private bool _dashing;
         private bool _controlEnabled = true;
+        private float _shieldTimer;
+        private float _shieldReduction;
 
         private InputAction _moveAction;
 
@@ -142,6 +147,33 @@ namespace Game.Player
             _critMultiplier = PlayerStats.CritMultiplier;
         }
 
+        // ------------------------------------------------------------------
+        // 보호막 (스킬)
+        // ------------------------------------------------------------------
+
+        /// <summary><paramref name="duration"/> 초 동안 받는 피해를 <paramref name="reduction"/>(0~1) 만큼 감소.</summary>
+        public void ActivateShield(float duration, float reduction)
+        {
+            _shieldTimer = Mathf.Max(_shieldTimer, duration);
+            _shieldReduction = Mathf.Clamp01(reduction);
+            ShieldChanged?.Invoke(true);
+        }
+
+        private void TickShield()
+        {
+            if (_shieldTimer <= 0f)
+            {
+                return;
+            }
+            _shieldTimer -= Time.deltaTime;
+            if (_shieldTimer <= 0f)
+            {
+                _shieldTimer = 0f;
+                _shieldReduction = 0f;
+                ShieldChanged?.Invoke(false);
+            }
+        }
+
         /// <summary>이번 타격 피해. 치명타 확률에 따라 배수 적용. HitDealt 이벤트도 발생.</summary>
         private int RollHit(out bool crit)
         {
@@ -157,6 +189,8 @@ namespace Game.Player
             {
                 return;
             }
+
+            TickShield(); // 버프는 상태 무관 실시간
 
             // 진행 중인 칸 이동은 죽더라도 끝까지 재생한다 (여기서 멈추면 코루틴/플래그가 stuck 된다).
             if (_isAnimating)
@@ -451,6 +485,15 @@ namespace Game.Player
             if (amount <= 0 || !IsAlive)
             {
                 return;
+            }
+
+            if (_shieldTimer > 0f)
+            {
+                amount = Mathf.Max(0, Mathf.RoundToInt(amount * (1f - _shieldReduction)));
+                if (amount <= 0)
+                {
+                    return; // 완전 차단
+                }
             }
 
             _hp = Mathf.Max(0, _hp - amount);

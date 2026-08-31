@@ -569,7 +569,7 @@ GameObject:
   - component: {fileID: 197898792}
   - component: {fileID: 197898791}
   m_Layer: 5
-  m_Name: Button (1)
+  m_Name: ShieldSkill_Btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -607,8 +607,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f1145f6067f3744b823923a57d51547, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.SkillButtonUI
-  _system: {fileID: 1748223060}
-  _slot: 0
+  _system: {fileID: 1477222404}
+  _slot: 1
   _button: {fileID: 197898792}
   _cooldownFill: {fileID: 197898793}
   _iconImage: {fileID: 0}
@@ -656,7 +656,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1748223060}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Game.Skills.SkillSystem, Assembly-CSharp
         m_MethodName: UseSlot
         m_Mode: 3
@@ -1204,7 +1204,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1764052470}
   m_Father: {fileID: 1748223059}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &478051413
@@ -1668,7 +1669,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2141,7 +2142,7 @@ GameObject:
   - component: {fileID: 563225615}
   - component: {fileID: 563225618}
   m_Layer: 5
-  m_Name: Button
+  m_Name: DashSkill_Btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2211,7 +2212,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1748223060}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Game.Skills.SkillSystem, Assembly-CSharp
         m_MethodName: UseSlot
         m_Mode: 3
@@ -2273,7 +2274,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f1145f6067f3744b823923a57d51547, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.SkillButtonUI
-  _system: {fileID: 1748223060}
+  _system: {fileID: 1477222404}
   _slot: 0
   _button: {fileID: 563225615}
   _cooldownFill: {fileID: 563225616}
@@ -3033,8 +3034,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f1145f6067f3744b823923a57d51547, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.SkillButtonUI
-  _system: {fileID: 1748223060}
-  _slot: 0
+  _system: {fileID: 1477222404}
+  _slot: 2
   _button: {fileID: 805925285}
   _cooldownFill: {fileID: 805925286}
   _iconImage: {fileID: 0}
@@ -3082,7 +3083,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1748223060}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Game.Skills.SkillSystem, Assembly-CSharp
         m_MethodName: UseSlot
         m_Mode: 3
@@ -4529,7 +4530,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Dash
+  m_text: 'Shield
 
 '
   m_isRightToLeft: 0
@@ -5057,6 +5058,109 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1452715292}
   m_CullTransparentMesh: 1
+--- !u!1 &1477222400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1477222401}
+  - component: {fileID: 1477222404}
+  - component: {fileID: 1477222403}
+  - component: {fileID: 1477222402}
+  - component: {fileID: 1477222405}
+  m_Layer: 0
+  m_Name: Skills
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1477222401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477222400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1748223059}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1477222402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477222400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc895da1502ad6e4aa49121d91a60770, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.ShieldSkill
+  _slot: 1
+  _displayName: Skill
+  _icon: {fileID: 0}
+  _cooldown: 5
+  _baseDuration: 4
+  _durationPerLevel: 0.5
+  _baseReduction: 0.5
+  _reductionPerLevel: 0.05
+  _maxReduction: 0.9
+--- !u!114 &1477222403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477222400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7711e83d998fe5a4f8c210b3eeb8604a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.DashSkill
+  _slot: 0
+  _displayName: Skill
+  _icon: {fileID: 0}
+  _cooldown: 5
+  _distance: 5
+  _damageMultiplier: 2
+  _widthRadius: 1
+  _stepDuration: 0.03
+--- !u!114 &1477222404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477222400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71393375940c8fe41bdad29b3a1b2628, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.SkillSystem
+  _slotKeys: 280000002600000011000000
+  _keyboardEnabled: 1
+--- !u!114 &1477222405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477222400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c174c70f0c5b12141a856bb5cd99f5b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.ShieldVisual
+  _ring: {fileID: 1764052469}
 --- !u!1 &1479948352
 GameObject:
   m_ObjectHideFlags: 0
@@ -5599,8 +5703,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1748223059}
   - component: {fileID: 1748223057}
-  - component: {fileID: 1748223061}
-  - component: {fileID: 1748223060}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -5644,45 +5746,100 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 478051412}
+  - {fileID: 1477222401}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1748223060
-MonoBehaviour:
+--- !u!1 &1764052469
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1748223056}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71393375940c8fe41bdad29b3a1b2628, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.SkillSystem
-  _slots:
-  - {fileID: 1748223061}
-  - {fileID: 0}
-  - {fileID: 0}
-  _slotKeys: 280000002600000011000000
-  _keyboardEnabled: 1
---- !u!114 &1748223061
-MonoBehaviour:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1764052470}
+  - component: {fileID: 1764052471}
+  m_Layer: 0
+  m_Name: Shield
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1764052470
+Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1748223056}
+  m_GameObject: {fileID: 1764052469}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.38, y: 0.38, z: 0.38}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 478051412}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &1764052471
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764052469}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7711e83d998fe5a4f8c210b3eeb8604a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Skills.DashSkill
-  _displayName: Skill
-  _icon: {fileID: 0}
-  _cooldown: 5
-  _distance: 5
-  _damageMultiplier: 2
-  _widthRadius: 1
-  _stepDuration: 0.03
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  m_Color: {r: 0, g: 0.3789742, b: 1, a: 0.36862746}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
 --- !u!1 &1799488503
 GameObject:
   m_ObjectHideFlags: 0
