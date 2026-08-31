@@ -1,5 +1,6 @@
 using UnityEngine;
 using Game.Equipment;
+using Game.Economy;
 using Game.Flow;
 
 namespace Game.Player
@@ -30,8 +31,10 @@ namespace Game.Player
         public static int DamageLevel => Mathf.Max(0, PlayerPrefs.GetInt(DmgLevelKey, 0));
         public static int HpLevel => Mathf.Max(0, PlayerPrefs.GetInt(HpLevelKey, 0));
 
-        public static int DamageUpgradeCost => 30 + 30 * DamageLevel;
-        public static int HpUpgradeCost => 20 + 20 * HpLevel;
+        // 다음 레벨 비용 (재화 2종 모두 소모). 레벨이 오를수록 증가.
+        // 레벨 0→1: (1,1) / 1→2: (2,2) / ... (임시 곡선)
+        public static CurrencyCost DamageUpgradeCost => new CurrencyCost(DamageLevel + 1, DamageLevel + 1);
+        public static CurrencyCost HpUpgradeCost => new CurrencyCost(HpLevel + 1, HpLevel + 1);
 
         // ---- 계산된 스탯 ----
         public static int Damage => Mathf.RoundToInt(BaseDamage + DamageLevel * DamagePerLevel);
@@ -73,15 +76,22 @@ namespace Game.Player
             PlayerPrefs.Save();
         }
 
-        // ---- 업그레이드 (골드 소모) ----
+        // ---- 업그레이드 (재화 2종 모두 소모) ----
+        public static bool CanAfford(CurrencyCost cost)
+        {
+            return GameManager.GetTotalCurrency(CurrencyType.Coin) >= cost.Coin
+                && GameManager.GetTotalCurrency(CurrencyType.Gold) >= cost.Gold;
+        }
+
         public static bool TryUpgradeDamage()
         {
-            int cost = DamageUpgradeCost;
-            if (GameManager.TotalGold < cost)
+            CurrencyCost cost = DamageUpgradeCost;
+            if (!CanAfford(cost))
             {
                 return false;
             }
-            GameManager.TotalGold -= cost;
+            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
+            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
             PlayerPrefs.SetInt(DmgLevelKey, DamageLevel + 1);
             PlayerPrefs.Save();
             return true;
@@ -89,12 +99,13 @@ namespace Game.Player
 
         public static bool TryUpgradeHp()
         {
-            int cost = HpUpgradeCost;
-            if (GameManager.TotalGold < cost)
+            CurrencyCost cost = HpUpgradeCost;
+            if (!CanAfford(cost))
             {
                 return false;
             }
-            GameManager.TotalGold -= cost;
+            GameManager.AddTotalCurrency(CurrencyType.Coin, -cost.Coin);
+            GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
             PlayerPrefs.SetInt(HpLevelKey, HpLevel + 1);
             PlayerPrefs.Save();
             return true;

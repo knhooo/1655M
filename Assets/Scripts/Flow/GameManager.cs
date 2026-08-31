@@ -51,7 +51,7 @@ namespace Game.Flow
         public static GameManager Instance { get; private set; }
 
         private const string BestDepthKey = "best_depth";
-        private const string TotalGoldKey = "total_gold";
+        private const string CurrencyKeyPrefix = "total_currency_";
 
         public static int BestDepth
         {
@@ -59,11 +59,17 @@ namespace Game.Flow
             private set { PlayerPrefs.SetInt(BestDepthKey, value); PlayerPrefs.Save(); }
         }
 
-        /// <summary>아웃게임 누적 재화. 상점/강화에서 사용.</summary>
-        public static int TotalGold
+        /// <summary>아웃게임 누적 재화(종류별). 강화에서 소모.</summary>
+        public static int GetTotalCurrency(CurrencyType type)
         {
-            get => PlayerPrefs.GetInt(TotalGoldKey, 0);
-            set { PlayerPrefs.SetInt(TotalGoldKey, Mathf.Max(0, value)); PlayerPrefs.Save(); }
+            return PlayerPrefs.GetInt(CurrencyKeyPrefix + (int)type, 0);
+        }
+
+        public static void AddTotalCurrency(CurrencyType type, int amount)
+        {
+            int v = Mathf.Max(0, GetTotalCurrency(type) + amount);
+            PlayerPrefs.SetInt(CurrencyKeyPrefix + (int)type, v);
+            PlayerPrefs.Save();
         }
 
         // ------------------------------------------------------------------

@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Game.Player;
+using Game.Economy;
 
 namespace Game.UI
 {
@@ -21,6 +22,10 @@ namespace Game.UI
         [SerializeField] private Image _hpFill;
         [SerializeField] private TMP_Text _hpText;
 
+        [Header("이번 런 재화 (선택)")]
+        [SerializeField] private TMP_Text _coinText;
+        [SerializeField] private TMP_Text _goldText;
+
         private PlayerController _player;
         private int _maxHp = 1;
 
@@ -39,6 +44,12 @@ namespace Game.UI
             _maxHp = Mathf.Max(1, _player.MaxHp);
             OnCellChanged(_player.Column, _player.Row);
             RefreshHp(_player.Hp);
+
+            if (RunWallet.Instance != null)
+            {
+                RunWallet.Instance.Changed += RefreshCurrency;
+            }
+            RefreshCurrency();
         }
 
         private void OnDisable()
@@ -51,6 +62,24 @@ namespace Game.UI
             _player.HpChanged -= OnHpChanged;
             _player.MaxHpChanged -= OnMaxHpChanged;
             _player = null;
+
+            if (RunWallet.Instance != null)
+            {
+                RunWallet.Instance.Changed -= RefreshCurrency;
+            }
+        }
+
+        private void RefreshCurrency()
+        {
+            RunWallet w = RunWallet.Instance;
+            if (_coinText != null)
+            {
+                _coinText.text = (w != null ? w.Get(CurrencyType.Coin) : 0).ToString();
+            }
+            if (_goldText != null)
+            {
+                _goldText.text = (w != null ? w.Get(CurrencyType.Gold) : 0).ToString();
+            }
         }
 
         private void OnCellChanged(int col, int row)

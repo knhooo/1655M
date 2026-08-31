@@ -27,8 +27,10 @@ namespace Game.Flow
         [SerializeField] private RectTransform _rt;
 
         [Header("내용")]
-        [Tooltip("보유 재화 표시.")]
-        [SerializeField] private TMP_Text _currencyText;
+        [Tooltip("보유 재화 1 표시.")]
+        [SerializeField] private TMP_Text _coinText;
+        [Tooltip("보유 재화 2 표시.")]
+        [SerializeField] private TMP_Text _goldText;
         [Tooltip("Status / Sword / Items 순. button 과 page 를 짝지어 연결.")]
         [SerializeField] private Tab[] _tabs;
         [Tooltip("타이틀로 돌아가기. 선택.")]
@@ -92,12 +94,16 @@ namespace Game.Flow
 
         public void SlideOut() => StartSlide(_hiddenPos);
 
-        /// <summary>재화 등 표시 갱신. 인벤토리를 열 때마다 호출.</summary>
+        /// <summary>재화 등 표시 갱신. 인벤토리를 열 때 + 강화 후 호출.</summary>
         public void Refresh()
         {
-            if (_currencyText != null)
+            if (_coinText != null)
             {
-                _currencyText.text = GameManager.TotalGold.ToString();
+                _coinText.text = GameManager.GetTotalCurrency(Economy.CurrencyType.Coin).ToString();
+            }
+            if (_goldText != null)
+            {
+                _goldText.text = GameManager.GetTotalCurrency(Economy.CurrencyType.Gold).ToString();
             }
         }
 

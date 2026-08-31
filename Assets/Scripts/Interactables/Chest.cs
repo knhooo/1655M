@@ -20,8 +20,10 @@ namespace Game.Interactables
             public bool isSword;
             [Tooltip("isSword 일 때 지급할 검 등급.")]
             public SwordRarity swordRarity = SwordRarity.Normal;
+            [Tooltip("검이 아닐 때 지급할 재화 종류.")]
+            public CurrencyType currency = CurrencyType.Coin;
             [Tooltip("검이 아닐 때 지급할 재화량.")]
-            public int goldAmount = 10;
+            public int currencyAmount = 5;
             [Min(0f)] public float weight = 1f;
         }
 
@@ -89,10 +91,10 @@ namespace Game.Interactables
             }
             else
             {
-                int gold = Mathf.Max(1, d.goldAmount);
-                RunWallet.Instance?.AddGold(gold);
-                Opened?.Invoke(false, $"+{gold}");
-                Debug.Log($"[Chest] 재화 +{gold}", this);
+                int amount = Mathf.Max(1, d.currencyAmount);
+                RunWallet.Instance?.Add(d.currency, amount);
+                Opened?.Invoke(false, $"+{amount}");
+                Debug.Log($"[Chest] {d.currency.DisplayName()} +{amount}", this);
             }
             // TODO: 드롭 파티클 / 픽업 튐 연출 / 사운드
         }
