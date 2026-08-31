@@ -1160,6 +1160,32 @@ MonoBehaviour:
   - prefab: {fileID: 2492819103783823822, guid: 12a0d75b9b1df0a4eb31dbcbc10edc04, type: 3}
     weight: 0.8
     minRow: 6
+  - prefab: {fileID: 8885432930543749996, guid: db6f84fce0a21824983dddb762f5f6de, type: 3}
+    weight: 0.8
+    minRow: 6
+  - prefab: {fileID: 8885432930543749996, guid: bc04c81465df7d1409bce03b5672d49a, type: 3}
+    weight: 0.8
+    minRow: 6
+  _formationDensity: 0.01
+  _formationTable:
+  - shape: 0
+    enemy: {fileID: 8885432930543749996, guid: bc04c81465df7d1409bce03b5672d49a, type: 3}
+    chest: {fileID: 0}
+    span: 9
+    weight: 2
+    minRow: 10
+  - shape: 1
+    enemy: {fileID: 8885432930543749996, guid: bc04c81465df7d1409bce03b5672d49a, type: 3}
+    chest: {fileID: 0}
+    span: 9
+    weight: 2
+    minRow: 20
+  - shape: 2
+    enemy: {fileID: 713625736}
+    chest: {fileID: 3688409965358433479, guid: 255116d349338854bb23acf0698cd1e5, type: 3}
+    span: 0
+    weight: 1
+    minRow: 30
 --- !u!1 &283350202
 GameObject:
   m_ObjectHideFlags: 0
@@ -4549,6 +4575,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 706563767}
   m_CullTransparentMesh: 1
+--- !u!114 &713625736 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8885432930543749996, guid: 1c73bc9a31bca9e42939d0981e451469, type: 3}
+  m_PrefabInstance: {fileID: 1800584275239755470}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b06e2cd081baf814cbbce30343274f75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.Enemy
 --- !u!1 &766925412
 GameObject:
   m_ObjectHideFlags: 0
@@ -10013,6 +10050,7 @@ MonoBehaviour:
   _digInterval: 0.12
   _stepInterval: 0.04
   _showDebugHud: 0
+  _godMode: 1
 --- !u!4 &1748223059
 Transform:
   m_ObjectHideFlags: 0
@@ -10050,7 +10088,6 @@ MonoBehaviour:
   _flipYWhenFacingLeft: 0
   _swingRadius: 0.5
   _arc: 120
-  _reverseSwing: 0
   _swingDuration: 0.2
   _effectDuration: 0.12
   _effectStartScale: 0.6

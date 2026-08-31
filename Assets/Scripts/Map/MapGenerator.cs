@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Game.Player;
+using Game.Enemies;
 
 namespace Game.Map
 {
@@ -95,6 +96,34 @@ namespace Game.Map
             [Tooltip("이 행 이상에서만 등장 (0 = 제한 없음).")]
             public int minRow = 0;
         }
+
+        // ---- 적 편대 (같은 적을 정해진 모양으로 무리 배치) ----
+
+        public enum FormationShape
+        {
+            Line,        // 가로 일자
+            Pyramid,     // 위가 뾰족한 삼각형 (span 은 밑변)
+            ChestGuard,  // 3x3, 가운데 상자 + 둘레 8칸 적
+        }
+
+        [Serializable]
+        private class FormationSpawn
+        {
+            public FormationShape shape = FormationShape.Line;
+            [Tooltip("무리를 이루는 적 (보통 enemy_small).")]
+            public Enemy enemy;
+            [Tooltip("ChestGuard 전용: 가운데에 놓을 상자 프리팹 (루트에 GridEntity 필요).")]
+            public GameObject chest;
+            [Tooltip("Line 길이 / Pyramid 밑변. ChestGuard 는 무시.")]
+            [Min(1)] public int span = 5;
+            [Min(0f)] public float weight = 1f;
+            [Tooltip("이 행 이상에서만 등장.")]
+            public int minRow = 10;
+        }
+
+        [Tooltip("각 칸이 편대 앵커가 될 확률. 낮게 유지.")]
+        [SerializeField, Range(0f, 0.1f)] private float _formationDensity = 0.015f;
+        [SerializeField] private FormationSpawn[] _formationTable;
 
         // 이벤트 -----------------------------------------------------------
         /// <summary>블록이 완전히 파괴됐을 때: (col, row, 파괴된 블록 데이터).</summary>
@@ -219,6 +248,12 @@ namespace Game.Map
 
                 // 2) 이 행에서 왼쪽 2x2 가 이미 점유
                 if (mapRow.Entities[col] != null)
+                {
+                    continue;
+                }
+
+                // 2.5) 적 편대 앵커?
+                if (TryPlaceFormation(col, row, mapRow))
                 {
                     continue;
                 }
@@ -375,6 +410,188 @@ namespace Game.Map
                         _pendingEntityCells[CellKey(cc, rr)] = e;
                     }
                 }
+            }
+
+            EntitySpawned?.Invoke(e);
+        }
+
+        // ------------------------------------------------------------------
+        // 적 편대 (같은 적을 정해진 모양으로 무리 배치)
+        // ------------------------------------------------------------------
+
+        private readonly List<(int col, int row, GridEntity prefab)> _formationBuf = new();
+
+        private bool TryPlaceFormation(int col, int row, MapRow mapRow)
+        {
+            if (_formationTable == null || _formationTable.Length == 0)
+            {
+                return false;
+            }
+            if (Hash01(col, row, 7) >= _formationDensity)
+            {
+                return false;
+            }
+
+            FormationSpawn f = PickFormation(row, Hash01(col, row, 8));
+            if (f == null || f.enemy == null)
+            {
+                return false;
+            }
+
+            _formationBuf.Clear();
+            if (!BuildFormationCells(f, col, row, _formationBuf))
+            {
+                return false;
+            }
+
+            // 이미 예약/점유된 칸과 겹치면 포기 (부분 배치 방지)
+            foreach (var (cc, rr, _) in _formationBuf)
+            {
+                if (cc < 0 || cc >= Columns || rr < 0)
+                {
+                    return false;
+                }
+                if (_pendingEntityCells.ContainsKey(CellKey(cc, rr)))
+                {
+                    return false;
+                }
+                if (rr == row && mapRow.Entities[cc] != null)
+                {
+                    return false;
+                }
+                if (rr != row && _rows.TryGetValue(rr, out MapRow other) && other.Entities[cc] != null)
+                {
+                    return false;
+                }
+            }
+
+            foreach (var (cc, rr, prefab) in _formationBuf)
+            {
+                PlaceFormationMember(prefab, cc, rr, row, mapRow);
+            }
+            return true;
+        }
+
+        private FormationSpawn PickFormation(int row, float t)
+        {
+            float total = 0f;
+            foreach (FormationSpawn f in _formationTable)
+            {
+                if (f != null && f.enemy != null && row >= f.minRow)
+                {
+                    total += Mathf.Max(0f, f.weight);
+                }
+            }
+            if (total <= 0f)
+            {
+                return null;
+            }
+
+            float pick = Mathf.Clamp01(t) * total;
+            float acc = 0f;
+            foreach (FormationSpawn f in _formationTable)
+            {
+                if (f == null || f.enemy == null || row < f.minRow)
+                {
+                    continue;
+                }
+                acc += Mathf.Max(0f, f.weight);
+                if (pick <= acc)
+                {
+                    return f;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>앵커(col,row) 를 좌상단 기준으로 편대 칸 목록을 만든다. 맵 밖으로 나가면 false.</summary>
+        private bool BuildFormationCells(FormationSpawn f, int col, int row, List<(int, int, GridEntity)> outCells)
+        {
+            switch (f.shape)
+            {
+                case FormationShape.Line:
+                {
+                    int n = Mathf.Max(1, f.span);
+                    if (col + n > Columns)
+                    {
+                        return false;
+                    }
+                    for (int i = 0; i < n; i++)
+                    {
+                        outCells.Add((col + i, row, f.enemy));
+                    }
+                    return true;
+                }
+
+                case FormationShape.Pyramid:
+                {
+                    int n = Mathf.Max(1, f.span);
+                    if (n % 2 == 0) n--;          // 홀수 밑변
+                    if (col + n > Columns)
+                    {
+                        return false;
+                    }
+                    int layers = (n + 1) / 2;
+                    for (int L = 0; L < layers; L++)
+                    {
+                        int w = 2 * L + 1;
+                        int start = col + (n - w) / 2;
+                        bool baseRow = L == layers - 1;
+                        for (int i = 0; i < w; i++)
+                        {
+                            // 속은 비움: 각 층의 양 끝(빗변)과 맨 아래 줄(밑변)만
+                            if (baseRow || i == 0 || i == w - 1)
+                            {
+                                outCells.Add((start + i, row + L, f.enemy));
+                            }
+                        }
+                    }
+                    return true;
+                }
+
+                case FormationShape.ChestGuard:
+                {
+                    if (col + 3 > Columns)
+                    {
+                        return false;
+                    }
+                    GridEntity chestPrefab = f.chest != null ? f.chest.GetComponent<GridEntity>() : null;
+                    for (int dy = 0; dy < 3; dy++)
+                    {
+                        for (int dx = 0; dx < 3; dx++)
+                        {
+                            bool center = dx == 1 && dy == 1;
+                            GridEntity prefab = center ? chestPrefab : f.enemy;
+                            if (prefab == null)
+                            {
+                                continue; // 상자 미지정이면 가운데는 비움
+                            }
+                            outCells.Add((col + dx, row + dy, prefab));
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void PlaceFormationMember(GridEntity prefab, int cc, int rr, int buildRow, MapRow buildMapRow)
+        {
+            GridEntity e = GetPool(prefab).Get();
+            _entityPrefabOf[e] = prefab;
+            e.Place(this, cc, rr, CellToWorld(cc, rr));
+
+            if (rr == buildRow)
+            {
+                buildMapRow.Entities[cc] = e;
+            }
+            else if (_rows.TryGetValue(rr, out MapRow other))
+            {
+                other.Entities[cc] = e;
+            }
+            else
+            {
+                _pendingEntityCells[CellKey(cc, rr)] = e;
             }
 
             EntitySpawned?.Invoke(e);

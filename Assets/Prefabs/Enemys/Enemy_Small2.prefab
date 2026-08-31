@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 8885432930543749996}
   - component: {fileID: 6444968416775781832}
   m_Layer: 0
-  m_Name: Enemy_Small
+  m_Name: Enemy_Small2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -117,7 +117,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1731697443031409149, guid: c3c304333efec37409bf2f973f657d65, type: 3}
+  m_Sprite: {fileID: 4062854969985130524, guid: c3c304333efec37409bf2f973f657d65, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -140,7 +140,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.Enemy
   _size: {x: 1, y: 1}
-  _maxHp: 10
+  _maxHp: 20
   _contactDamage: 1
   _contactInterval: 0.8
   _coinRewardMin: 1

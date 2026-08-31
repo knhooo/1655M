@@ -213,6 +213,27 @@ namespace Game.Player
             UnityEditor.Menu.SetChecked("1655M/Debug: All Swords Unlocked", RunInventory.AllUnlocked);
             return true;
         }
+
+        [UnityEditor.MenuItem("1655M/Debug: Player Invincible")]
+        private static void TogglePlayerInvincible()
+        {
+            bool on = PlayerPrefs.GetInt(PlayerController.GodModeKey, 0) == 1;
+            PlayerPrefs.SetInt(PlayerController.GodModeKey, on ? 0 : 1);
+            PlayerPrefs.Save();
+            if (PlayerController.Instance != null)
+            {
+                // 플레이 중 즉시 반영: 다음 씬부터가 아니라 지금도
+                Debug.Log($"[PlayerStats] Player Invincible = {!on} (재생 중이면 재시작해야 완전 반영)");
+            }
+        }
+
+        [UnityEditor.MenuItem("1655M/Debug: Player Invincible", true)]
+        private static bool TogglePlayerInvincibleValidate()
+        {
+            UnityEditor.Menu.SetChecked("1655M/Debug: Player Invincible",
+                PlayerPrefs.GetInt(PlayerController.GodModeKey, 0) == 1);
+            return true;
+        }
 #endif
     }
 }

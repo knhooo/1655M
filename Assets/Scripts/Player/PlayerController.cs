@@ -41,6 +41,11 @@ namespace Game.Player
         [Header("Debug")]
         [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그).")]
         [SerializeField] private bool _showDebugHud = false;
+        [Tooltip("무적 치트. 메뉴 '1655M/Debug: Player Invincible' 로도 토글 (재시작해도 유지).")]
+        [SerializeField] private bool _godMode = false;
+
+        internal const string GodModeKey = "debug_godmode";
+        public bool GodMode => _godMode;
 
         // 이벤트 ----------------------------------------------------------
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
@@ -104,6 +109,11 @@ namespace Game.Player
                 return;
             }
             Instance = this;
+
+            if (PlayerPrefs.GetInt(GodModeKey, 0) == 1)
+            {
+                _godMode = true;
+            }
 
             ApplyStats();
 
@@ -528,7 +538,7 @@ namespace Game.Player
         /// <param name="source">피해원 월드 위치 (데미지 텍스트가 여기서 생성됨).</param>
         public void Damage(int amount, Vector3 source)
         {
-            if (amount <= 0 || !IsAlive)
+            if (amount <= 0 || !IsAlive || _godMode)
             {
                 return;
             }
@@ -579,7 +589,7 @@ namespace Game.Player
             }
 
             string s = $"cell ({_col},{_row})  depth {_row}\n" +
-                       $"HP {_hp}/{_maxHp}  alive={IsAlive}\n" +
+                       $"HP {_hp}/{_maxHp}  alive={IsAlive}" + (_godMode ? "  [GOD]" : "") + "\n" +
                        $"anim={_isAnimating} dash={_dashing} timer={_actionTimer:F2}\n" +
                        $"rowReady(below)={( _map != null && _map.IsRowReady(_row + 1))}";
             GUI.Label(new Rect(10, 10, 400, 90), s);
