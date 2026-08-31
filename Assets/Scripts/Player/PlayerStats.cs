@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Game.Equipment;
 using Game.Economy;
@@ -14,6 +15,9 @@ namespace Game.Player
     /// </summary>
     public static class PlayerStats
     {
+        /// <summary>스탯이 바뀌었을 때 (강화·검 장착). UI 갱신용.</summary>
+        public static event Action Changed;
+
         // ---- 기본값 ----
         public const float BaseDamage = 17f;
         public const int BaseMaxHp = 500;
@@ -40,6 +44,10 @@ namespace Game.Player
         public static int Damage => Mathf.RoundToInt(BaseDamage + DamageLevel * DamagePerLevel);
         public static int MaxHp => BaseMaxHp + HpLevel * HpPerLevel;
         public static float CritChance => Mathf.Clamp(BaseCritChance + EquippedSwordCritBonus(), 0f, 100f);
+
+        // 강화 시 도달할 값 (UI 미리보기)
+        public static int NextDamage => Mathf.RoundToInt(BaseDamage + (DamageLevel + 1) * DamagePerLevel);
+        public static int NextMaxHp => BaseMaxHp + (HpLevel + 1) * HpPerLevel;
 
         // ---- 장착 검 ----
         /// <summary>장착 중인 검. 명시 안 됐거나 미보유면 보유 중 최고 등급 자동.</summary>
@@ -74,6 +82,7 @@ namespace Game.Player
             }
             PlayerPrefs.SetInt(EquippedSwordKey, (int)rarity);
             PlayerPrefs.Save();
+            Changed?.Invoke();
         }
 
         // ---- 업그레이드 (재화 2종 모두 소모) ----
@@ -94,6 +103,7 @@ namespace Game.Player
             GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
             PlayerPrefs.SetInt(DmgLevelKey, DamageLevel + 1);
             PlayerPrefs.Save();
+            Changed?.Invoke();
             return true;
         }
 
@@ -108,6 +118,7 @@ namespace Game.Player
             GameManager.AddTotalCurrency(CurrencyType.Gold, -cost.Gold);
             PlayerPrefs.SetInt(HpLevelKey, HpLevel + 1);
             PlayerPrefs.Save();
+            Changed?.Invoke();
             return true;
         }
 

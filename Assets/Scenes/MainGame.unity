@@ -174,8 +174,8 @@ MonoBehaviour:
   _depthSuffix: ' m'
   _hpFill: {fileID: 407620577}
   _hpText: {fileID: 0}
-  _currencyFirstText: {fileID: 0}
-  _currencySecondText: {fileID: 0}
+  _coinText: {fileID: 0}
+  _goldText: {fileID: 0}
 --- !u!1 &94398908
 GameObject:
   m_ObjectHideFlags: 0
@@ -660,8 +660,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Flow.InventoryUI
   _rt: {fileID: 283350203}
-  _currencyFirstText: {fileID: 0}
-  _currencySecondText: {fileID: 0}
+  _coinText: {fileID: 0}
+  _goldText: {fileID: 0}
   _tabs:
   - button: {fileID: 1979244086}
     page: {fileID: 0}

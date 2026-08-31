@@ -3,6 +3,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Player;
 
 namespace Game.Flow
 {
@@ -78,6 +79,9 @@ namespace Game.Flow
                 _backButton.onClick.AddListener(OnBack);
             }
         }
+
+        private void OnEnable() => PlayerStats.Changed += Refresh;
+        private void OnDisable() => PlayerStats.Changed -= Refresh;
 
         public void HideInstant()
         {
