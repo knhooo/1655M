@@ -4,6 +4,8 @@ using UnityEngine.SceneManagement;
 using Game.Player;
 using Game.Map;
 using Game.CameraRig;
+using Game.Economy;
+using Game.Equipment;
 
 namespace Game.Flow
 {
@@ -196,6 +198,10 @@ namespace Game.Flow
                 best = score;
                 BestDepth = best;
             }
+
+            // 이번 런에서 모은 재화·장비를 영구 저장으로 적립
+            RunWallet.Instance?.BankToTotal();
+            RunInventory.Instance?.BankToOwned();
 
             yield return new WaitForSeconds(_deathPause);
 

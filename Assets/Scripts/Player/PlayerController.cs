@@ -35,13 +35,6 @@ namespace Game.Player
         [Tooltip("입력이 없을 때도 유지되는 스텝 간 최소 간격(초).")]
         [SerializeField] private float _stepInterval = 0.04f;
 
-        [Header("Dig (이동 = 채굴 = 적 타격, 모두 동일)")]
-        [Tooltip("막힌 칸으로 이동 시도 시 그 칸(지층/적)에 주는 피해.")]
-        [SerializeField] private int _digPower = 1;
-
-        [Header("Stats (임시)")]
-        [SerializeField] private int _maxHp = 5;
-
         [Header("Debug")]
         [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그).")]
         [SerializeField] private bool _showDebugHud = true;
@@ -49,7 +42,9 @@ namespace Game.Player
         // 이벤트 ----------------------------------------------------------
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
         public event Action<int, int, BlockData> Dug;       // (col, row, 파괴 전 데이터) 채굴 시도
+        public event Action<int, bool> HitDealt;            // (피해량, 치명타 여부) 타격 시
         public event Action<int> HpChanged;                 // 현재 HP
+        public event Action<int> MaxHpChanged;              // 최대 HP (런 시작 시)
         public event Action Died;
         public event Action DashStarted;
         public event Action DashEnded;
@@ -60,6 +55,7 @@ namespace Game.Player
         public int Row => _row;
         public int Depth => _row;                           // 심도 = row
         public int Hp => _hp;
+        public int MaxHp => _maxHp;
         public bool IsAlive => _hp > 0;
         public bool IsDashing => _dashing;
         public bool IsBusy => _isAnimating || _dashing;
@@ -67,6 +63,10 @@ namespace Game.Player
         private int _col;
         private int _row;
         private int _hp;
+        private int _maxHp;
+        private int _damage;
+        private float _critChance;
+        private float _critMultiplier;
         private bool _dashing;
         private bool _controlEnabled = true;
 
@@ -83,7 +83,7 @@ namespace Game.Player
 
         private void Awake()
         {
-            _hp = _maxHp;
+            ApplyStats();
 
             if (_inputActions != null)
             {
@@ -105,7 +105,27 @@ namespace Game.Player
                 transform.position = _map.CellToWorld(_col, _row);
             }
             CellChanged?.Invoke(_col, _row);
+            MaxHpChanged?.Invoke(_maxHp);
             HpChanged?.Invoke(_hp);
+        }
+
+        /// <summary>PlayerStats(기본값 + Status 업그레이드 + 장착 검)에서 스탯을 읽어 캐시.</summary>
+        private void ApplyStats()
+        {
+            _maxHp = PlayerStats.MaxHp;
+            _hp = _maxHp;
+            _damage = PlayerStats.Damage;
+            _critChance = PlayerStats.CritChance;
+            _critMultiplier = PlayerStats.CritMultiplier;
+        }
+
+        /// <summary>이번 타격 피해. 치명타 확률에 따라 배수 적용. HitDealt 이벤트도 발생.</summary>
+        private int RollHit()
+        {
+            bool crit = UnityEngine.Random.value * 100f < _critChance;
+            int dmg = crit ? Mathf.RoundToInt(_damage * _critMultiplier) : _damage;
+            HitDealt?.Invoke(dmg, crit);
+            return dmg;
         }
 
         private void Update()
@@ -214,7 +234,7 @@ namespace Game.Player
             {
                 // 이동하지 않고 그 칸을 타격 — 지층이든 적이든 동일하게 HP 를 깎는다.
                 BlockData before = _map.GetBlock(tc, tr);
-                _map.DamageCell(tc, tr, _digPower);
+                _map.DamageCell(tc, tr, RollHit());
                 if (before.IsSolid) // 지층 블록이었을 때만 채굴 이벤트 (적 타격 연출은 별도)
                 {
                     Dug?.Invoke(tc, tr, before);
@@ -263,10 +283,10 @@ namespace Game.Player
 
         /// <summary>
         /// 현재 위치에서 수직 아래로 <paramref name="distance"/> 칸까지 빠르게 돌진한다.
-        /// 진행 방향(아래) + 좌우 <paramref name="widthRadius"/> 칸을 <paramref name="digPower"/> 로 타격.
+        /// 진행 방향(아래) + 좌우 <paramref name="widthRadius"/> 칸을 <paramref name="damageMultiplier"/> 배 피해로 타격.
         /// 정면을 못 뚫으면 그 지점에서 멈춘다.
         /// </summary>
-        public bool StartDash(int distance, int digPower, int widthRadius, float stepDuration)
+        public bool StartDash(int distance, float damageMultiplier, int widthRadius, float stepDuration)
         {
             if (!CanDash())
             {
@@ -275,13 +295,13 @@ namespace Game.Player
 
             StartCoroutine(DashRoutine(
                 Mathf.Max(1, distance),
-                Mathf.Max(1, digPower),
+                Mathf.Max(0.1f, damageMultiplier),
                 Mathf.Max(0, widthRadius),
                 Mathf.Max(0.01f, stepDuration)));
             return true;
         }
 
-        private IEnumerator DashRoutine(int distance, int digPower, int widthRadius, float stepDuration)
+        private IEnumerator DashRoutine(int distance, float damageMultiplier, int widthRadius, float stepDuration)
         {
             _dashing = true;
             DashStarted?.Invoke();
@@ -307,7 +327,7 @@ namespace Game.Player
                         }
                         if (_map.IsSolid(c, tr))
                         {
-                            _map.DamageCell(c, tr, digPower);
+                            _map.DamageCell(c, tr, Mathf.RoundToInt(RollHit() * damageMultiplier));
                         }
                         DashAffectedCell?.Invoke(c, tr);
                     }

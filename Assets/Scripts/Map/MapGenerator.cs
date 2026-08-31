@@ -45,10 +45,10 @@ namespace Game.Map
         [Tooltip("추적 대상 위로 이만큼 벗어난 행은 회수한다.")]
         [SerializeField] private int _rowsBehind = 6;
 
-        [Header("Strata HP (임시 값 - 나중에 StrataSO 로 대체)")]
-        [SerializeField] private int _soilHp = 1;
-        [SerializeField] private int _rockHp = 3;
-        [SerializeField] private int _oreHp = 5;
+        [Header("Strata HP (임시 밸런스 - 플레이어 대미지 17 기준: 1 / 3 / 6 타)")]
+        [SerializeField] private int _soilHp = 15;
+        [SerializeField] private int _rockHp = 45;
+        [SerializeField] private int _oreHp = 95;
 
         [Header("Strata 층 (깊이대별 단일 지층 - 임시 값)")]
         [Tooltip("맨 위 빈 지표 행 수. 이 아래부터 첫 번째 층이 시작.")]
@@ -71,18 +71,23 @@ namespace Game.Map
             public int thickness;
         }
 
-        [Header("Entities (적 - 격자에 지층 대신 배치. 나중에 아이템도 동일 방식)")]
+        [Header("Entities (적·상자·아이템 - 격자에 지층 대신 배치)")]
         [SerializeField] private int _entitySeed = 12345;
         [Tooltip("이 행부터 엔티티가 등장.")]
         [SerializeField] private int _entityStartRow = 5;
         [Tooltip("각 칸이 엔티티가 될 확률.")]
-        [SerializeField, Range(0f, 0.5f)] private float _entityDensity = 0.06f;
-        [Tooltip("엔티티 중 2x2 크기의 비율.")]
-        [SerializeField, Range(0f, 1f)] private float _bigEntityChance = 0.25f;
-        [Tooltip("1x1 적 프리팹 후보.")]
-        [SerializeField] private GridEntity[] _enemyPrefabs1x1;
-        [Tooltip("2x2 적 프리팹 후보. 비어 있으면 2x2 는 생성되지 않는다.")]
-        [SerializeField] private GridEntity[] _enemyPrefabs2x2;
+        [SerializeField, Range(0f, 0.5f)] private float _entityDensity = 0.08f;
+        [Tooltip("스폰 후보 가중치 테이블. 점유 칸 크기는 프리팹의 Size 를 따른다.")]
+        [SerializeField] private EntitySpawn[] _entityTable;
+
+        [Serializable]
+        private class EntitySpawn
+        {
+            public GridEntity prefab;
+            [Min(0f)] public float weight = 1f;
+            [Tooltip("이 행 이상에서만 등장 (0 = 제한 없음).")]
+            public int minRow = 0;
+        }
 
         // 이벤트 -----------------------------------------------------------
         /// <summary>블록이 완전히 파괴됐을 때: (col, row, 파괴된 블록 데이터).</summary>
@@ -268,7 +273,7 @@ namespace Game.Map
             prefab = null;
             size = Vector2Int.one;
 
-            if (row < _entityStartRow)
+            if (row < _entityStartRow || _entityTable == null || _entityTable.Length == 0)
             {
                 return false;
             }
@@ -277,21 +282,14 @@ namespace Game.Map
                 return false;
             }
 
-            bool big = Hash01(col, row, 2) < _bigEntityChance
-                       && _enemyPrefabs2x2 != null && _enemyPrefabs2x2.Length > 0;
-
-            if (big)
+            prefab = PickWeighted(row, Hash01(col, row, 2));
+            if (prefab == null)
             {
-                size = new Vector2Int(2, 2);
-                prefab = Pick(_enemyPrefabs2x2, Hash01(col, row, 3));
+                return false;
             }
-            else
-            {
-                size = Vector2Int.one;
-                prefab = Pick(_enemyPrefabs1x1, Hash01(col, row, 3));
-            }
+            size = prefab.Size;
 
-            if (prefab == null || col + size.x > Columns)
+            if (col + size.x > Columns)
             {
                 return false;
             }
@@ -306,6 +304,41 @@ namespace Game.Map
                 }
             }
             return true;
+        }
+
+        /// <summary>깊이 조건을 만족하는 테이블 항목 중 가중치로 하나 선택.</summary>
+        private GridEntity PickWeighted(int row, float t)
+        {
+            float total = 0f;
+            for (int i = 0; i < _entityTable.Length; i++)
+            {
+                EntitySpawn e = _entityTable[i];
+                if (e != null && e.prefab != null && row >= e.minRow)
+                {
+                    total += Mathf.Max(0f, e.weight);
+                }
+            }
+            if (total <= 0f)
+            {
+                return null;
+            }
+
+            float pick = Mathf.Clamp01(t) * total;
+            float acc = 0f;
+            for (int i = 0; i < _entityTable.Length; i++)
+            {
+                EntitySpawn e = _entityTable[i];
+                if (e == null || e.prefab == null || row < e.minRow)
+                {
+                    continue;
+                }
+                acc += Mathf.Max(0f, e.weight);
+                if (pick <= acc)
+                {
+                    return e.prefab;
+                }
+            }
+            return null;
         }
 
         private void SpawnEntity(GridEntity prefab, Vector2Int size, int col, int row, MapRow anchorRow)
@@ -402,16 +435,6 @@ namespace Game.Map
                 _entityPools.Add(prefab, pool);
             }
             return pool;
-        }
-
-        private static GridEntity Pick(GridEntity[] arr, float t)
-        {
-            if (arr == null || arr.Length == 0)
-            {
-                return null;
-            }
-            int i = Mathf.Clamp(Mathf.FloorToInt(t * arr.Length), 0, arr.Length - 1);
-            return arr[i];
         }
 
         // ------------------------------------------------------------------

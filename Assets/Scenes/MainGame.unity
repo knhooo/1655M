@@ -341,11 +341,16 @@ MonoBehaviour:
   _entitySeed: 12345
   _entityStartRow: 5
   _entityDensity: 0.06
-  _bigEntityChance: 0.25
-  _enemyPrefabs1x1:
-  - {fileID: 8885432930543749996, guid: 1c73bc9a31bca9e42939d0981e451469, type: 3}
-  _enemyPrefabs2x2:
-  - {fileID: 8885432930543749996, guid: dc6fdb44339fc184bb6daff012bb7078, type: 3}
+  _entityTable:
+  - prefab: {fileID: 8885432930543749996, guid: 1c73bc9a31bca9e42939d0981e451469, type: 3}
+    weight: 3
+    minRow: 5
+  - prefab: {fileID: 8885432930543749996, guid: dc6fdb44339fc184bb6daff012bb7078, type: 3}
+    weight: 1
+    minRow: 8
+  - prefab: {fileID: 8276540668661123389, guid: 255116d349338854bb23acf0698cd1e5, type: 3}
+    weight: 1.5
+    minRow: 3
 --- !u!1 &283350202
 GameObject:
   m_ObjectHideFlags: 0
@@ -2186,6 +2191,9 @@ MonoBehaviour:
   _group: {fileID: 1150944890}
   _bestScoreText: {fileID: 766925414}
   _playButton: {fileID: 693288313}
+  _playButtonLabel: {fileID: 507212755}
+  _titleLabel: Ready
+  _inventoryLabel: Play
 --- !u!225 &1150944890
 CanvasGroup:
   m_ObjectHideFlags: 0

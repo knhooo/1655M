@@ -15,8 +15,8 @@ namespace Game.Skills
         [Tooltip("아래로 최대 몇 칸 돌진할지.")]
         [SerializeField, Min(1)] private int _distance = 5;
 
-        [Tooltip("돌진 중 지층 파괴력 (평소 채굴보다 강하게).")]
-        [SerializeField, Min(1)] private int _digPower = 3;
+        [Tooltip("돌진 중 타격 피해 배수 (기본 대미지 대비).")]
+        [SerializeField, Min(0.1f)] private float _damageMultiplier = 2f;
 
         [Tooltip("돌진 중 좌우로 추가 타격하는 범위(칸). 1 = 양옆 1칸씩 = 총 3칸 폭.")]
         [SerializeField, Min(0)] private int _widthRadius = 1;
@@ -38,7 +38,7 @@ namespace Game.Skills
 
         protected override void OnActivate()
         {
-            _player.StartDash(_distance, _digPower, _widthRadius, _stepDuration);
+            _player.StartDash(_distance, _damageMultiplier, _widthRadius, _stepDuration);
         }
     }
 }

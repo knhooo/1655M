@@ -13,8 +13,10 @@ namespace Game.Enemies
     public class Enemy : GridEntity
     {
         [Header("Enemy")]
-        [SerializeField] private int _maxHp = 3;
-        [SerializeField] private int _contactDamage = 1;
+        [Tooltip("임시 밸런스: 플레이어 대미지 17 기준. 45 ≈ 3타.")]
+        [SerializeField] private int _maxHp = 45;
+        [Tooltip("플레이어 최대 HP 500 기준. 접촉 1회 피해.")]
+        [SerializeField] private int _contactDamage = 20;
         [Tooltip("접촉 피해 재적용 간격(초).")]
         [SerializeField] private float _contactInterval = 0.8f;
         [SerializeField] private SpriteRenderer _renderer;
