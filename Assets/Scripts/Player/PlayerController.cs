@@ -54,6 +54,7 @@ namespace Game.Player
         public event Action DashStarted;
         public event Action DashEnded;
         public event Action<int, int> DashAffectedCell;     // (col, row) 돌진이 타격한 칸 - 적 피해 훅
+        public event Action<int, int, int> ShockwaveFired;  // (중심 col, row, 반경) - 확산 연출용
 
         /// <summary>씬 단위 싱글톤. 씬 리로드마다 새로 생성.</summary>
         public static PlayerController Instance { get; private set; }
@@ -447,6 +448,50 @@ namespace Game.Player
                 _actionTimer = _digInterval;
                 DashEnded?.Invoke();
             }
+        }
+
+        // ------------------------------------------------------------------
+        // 충격파 (스킬)
+        // ------------------------------------------------------------------
+
+        /// <summary>플레이어 중심 반경 <paramref name="radius"/> 원형 범위의 지층·엔티티에 즉발 피해.</summary>
+        public void Shockwave(int radius, float damageMultiplier)
+        {
+            if (_map == null || radius <= 0)
+            {
+                return;
+            }
+
+            int r2 = radius * radius;
+            for (int dr = -radius; dr <= radius; dr++)
+            {
+                for (int dc = -radius; dc <= radius; dc++)
+                {
+                    if (dc == 0 && dr == 0)
+                    {
+                        continue;
+                    }
+                    if (dc * dc + dr * dr > r2)
+                    {
+                        continue; // 원형
+                    }
+
+                    int c = _col + dc;
+                    int rw = _row + dr;
+                    if (c < 0 || c >= MapGenerator.Columns || rw < 0 || !_map.IsRowReady(rw))
+                    {
+                        continue;
+                    }
+                    if (_map.IsSolid(c, rw))
+                    {
+                        int hit = Mathf.RoundToInt(RollHit(out bool crit) * damageMultiplier);
+                        _map.DamageCell(c, rw, hit, crit);
+                    }
+                }
+            }
+
+            ShockwaveFired?.Invoke(_col, _row, radius);
+            // TODO: 히트스톱 / 카메라 흔들림 / 사운드
         }
 
         // ------------------------------------------------------------------
