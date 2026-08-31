@@ -7,12 +7,11 @@ namespace Game.UI
 {
     /// <summary>
     /// 인게임 HUD. 맨 위 = 현재 심도(m, 1행 = 1m), 그 아래 = HP 가로 바.
-    /// PlayerController 이벤트를 구독. HUD 오브젝트에 붙인다.
+    /// PlayerController.Instance 이벤트를 구독. HUD 오브젝트에 붙인다.
+    /// (HUD 는 게임 시작 시 활성화되므로 OnEnable 시점엔 Instance 가 이미 존재)
     /// </summary>
     public class HudView : MonoBehaviour
     {
-        [SerializeField] private PlayerController _player;
-
         [Header("심도")]
         [SerializeField] private TMP_Text _depthText;
         [SerializeField] private string _depthSuffix = " m";
@@ -22,19 +21,21 @@ namespace Game.UI
         [SerializeField] private Image _hpFill;
         [SerializeField] private TMP_Text _hpText;
 
+        private PlayerController _player;
         private int _maxHp = 1;
 
         private void OnEnable()
         {
+            _player = PlayerController.Instance;
             if (_player == null)
             {
                 return;
             }
+
             _player.CellChanged += OnCellChanged;
             _player.HpChanged += OnHpChanged;
             _player.MaxHpChanged += OnMaxHpChanged;
 
-            // 현재 상태 즉시 반영 (이벤트를 놓쳤을 수 있음)
             _maxHp = Mathf.Max(1, _player.MaxHp);
             OnCellChanged(_player.Column, _player.Row);
             RefreshHp(_player.Hp);
@@ -49,6 +50,7 @@ namespace Game.UI
             _player.CellChanged -= OnCellChanged;
             _player.HpChanged -= OnHpChanged;
             _player.MaxHpChanged -= OnMaxHpChanged;
+            _player = null;
         }
 
         private void OnCellChanged(int col, int row)
@@ -75,7 +77,6 @@ namespace Game.UI
             {
                 _hpFill.fillAmount = t;
             }
-
             if (_hpText != null)
             {
                 _hpText.text = $"{Mathf.Max(0, hp)} / {_maxHp}";

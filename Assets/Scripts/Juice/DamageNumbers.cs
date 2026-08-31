@@ -10,12 +10,11 @@ namespace Game.Juice
     ///  - 플레이어 피격: 마젠타, 위로 곧게 올라가며 소멸
     ///  - 적 피격(일반): 그린, 튀어올랐다 낙하
     ///  - 적 피격(치명타): 빨강, 동일 모션
-    /// 항상 활성인 오브젝트에 붙이고 _player / _map / _prefab 를 연결.
+    /// 항상 활성인 오브젝트에 붙이고 _map / _prefab 를 연결 (플레이어는 싱글톤).
     /// </summary>
     public class DamageNumbers : MonoBehaviour
     {
         [SerializeField] private DamageNumber _prefab;
-        [SerializeField] private PlayerController _player;
         [SerializeField] private MapGenerator _map;
 
         [Header("색상")]
@@ -48,15 +47,16 @@ namespace Game.Juice
                 maxSize: 256);
         }
 
-        private void OnEnable()
+        // 구독은 Start 에서 (모든 Awake 이후 = PlayerController.Instance 보장)
+        private void Start()
         {
-            if (_player != null) _player.DamageTaken += OnPlayerDamaged;
+            if (PlayerController.Instance != null) PlayerController.Instance.DamageTaken += OnPlayerDamaged;
             if (_map != null) _map.DamageDealt += OnDamageDealt;
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
-            if (_player != null) _player.DamageTaken -= OnPlayerDamaged;
+            if (PlayerController.Instance != null) PlayerController.Instance.DamageTaken -= OnPlayerDamaged;
             if (_map != null) _map.DamageDealt -= OnDamageDealt;
         }
 

@@ -24,10 +24,11 @@ namespace Game.Flow
     public class GameManager : MonoBehaviour
     {
         [Header("Scene References")]
-        [SerializeField] private PlayerController _player;
         [SerializeField] private CameraFollow _camera;
         [SerializeField] private MapGenerator _map;
         [SerializeField] private ScreenFader _fader;
+
+        private static PlayerController Player => PlayerController.Instance;
 
         [Header("UI")]
         [SerializeField] private TitleScreen _titleScreen;
@@ -84,26 +85,19 @@ namespace Game.Flow
             {
                 Instance = null;
             }
-        }
-
-        private void OnEnable()
-        {
-            if (_player != null)
+            if (Player != null)
             {
-                _player.Died += OnPlayerDied;
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (_player != null)
-            {
-                _player.Died -= OnPlayerDied;
+                Player.Died -= OnPlayerDied;
             }
         }
 
         private void Start()
         {
+            // 구독은 Start 에서 (모든 Awake 이후 = PlayerController.Instance 보장)
+            if (Player != null)
+            {
+                Player.Died += OnPlayerDied;
+            }
             EnterTitle();
         }
 
@@ -119,7 +113,7 @@ namespace Game.Flow
             if (_inventoryUI != null) _inventoryUI.HideInstant();
             if (_hud != null) _hud.SetActive(false);
             if (_resultScreen != null) _resultScreen.Hide();
-            if (_player != null) _player.SetControlEnabled(false);
+            if (Player != null) Player.SetControlEnabled(false);
             if (_fader != null) _fader.FadeIn();
         }
 
@@ -171,7 +165,7 @@ namespace Game.Flow
             if (_titleScreen != null) _titleScreen.Hide();
             if (_inventoryUI != null) _inventoryUI.SlideOut();
             if (_hud != null) _hud.SetActive(true);
-            if (_player != null) _player.SetControlEnabled(true);
+            if (Player != null) Player.SetControlEnabled(true);
         }
 
         // ------------------------------------------------------------------
@@ -190,7 +184,7 @@ namespace Game.Flow
         {
             Current = State.Ending;
 
-            int score = Mathf.Max(0, _player != null ? _player.Depth : 0);
+            int score = Mathf.Max(0, Player != null ? Player.Depth : 0);
             int best = BestDepth;
             bool newBest = score > best;
             if (newBest)

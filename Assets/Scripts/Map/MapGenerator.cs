@@ -26,17 +26,19 @@ namespace Game.Map
 
         [Header("References")]
         [SerializeField] private BlockView _blockPrefab;
-        [Tooltip("이 대상의 y 위치를 기준으로 행을 스트리밍한다 (보통 플레이어).")]
+        [Tooltip("스트리밍 기준 대상. 비우면 PlayerController.Instance 사용.")]
         [SerializeField] private Transform _tracked;
-        [Tooltip("적의 접촉 피해 판정 등에 사용. 보통 _tracked 와 같은 플레이어.")]
-        [SerializeField] private PlayerController _player;
         [Tooltip("생성물의 부모이자 그리드 (col 0, row 0) 의 원점. 비우면 이 오브젝트가 기준.")]
         [SerializeField] private Transform _blockRoot;
 
         /// <summary>그리드 원점 + 부모. 인스펙터 미할당이어도(에디트 모드 포함) 안전하게 자기 Transform 사용.</summary>
         private Transform Root => _blockRoot != null ? _blockRoot : transform;
 
-        public PlayerController Player => _player;
+        public PlayerController Player => PlayerController.Instance;
+
+        /// <summary>스트리밍 기준 Transform. _tracked 미할당이면 플레이어.</summary>
+        private Transform Tracked => _tracked != null ? _tracked
+            : (PlayerController.Instance != null ? PlayerController.Instance.transform : null);
 
         [Header("Grid")]
         [SerializeField] private float _cellSize = 1f;
@@ -125,11 +127,6 @@ namespace Game.Map
 
         private void Awake()
         {
-            if (_tracked == null && _player != null)
-            {
-                _tracked = _player.transform;
-            }
-
             int prewarm = Columns * (_rowsAhead + _rowsBehind + 4);
             _blockPool = new ObjectPool<BlockView>(
                 createFunc: CreateBlockView,
@@ -176,7 +173,8 @@ namespace Game.Map
 
         private void StreamRows()
         {
-            int focusRow = _tracked != null ? WorldToRow(_tracked.position.y) : 0;
+            Transform tracked = Tracked;
+            int focusRow = tracked != null ? WorldToRow(tracked.position.y) : 0;
 
             int wantBottom = focusRow + _rowsAhead;
             int wantTop = Mathf.Max(0, focusRow - _rowsBehind);

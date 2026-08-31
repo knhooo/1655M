@@ -54,6 +54,9 @@ namespace Game.Player
         public event Action DashEnded;
         public event Action<int, int> DashAffectedCell;     // (col, row) 돌진이 타격한 칸 - 적 피해 훅
 
+        /// <summary>씬 단위 싱글톤. 씬 리로드마다 새로 생성.</summary>
+        public static PlayerController Instance { get; private set; }
+
         // 상태 ----------------------------------------------------------
         public int Column => _col;
         public int Row => _row;
@@ -87,12 +90,28 @@ namespace Game.Player
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[PlayerController] 중복 인스턴스 - 파괴", this);
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+
             ApplyStats();
 
             if (_inputActions != null)
             {
                 _moveAction = _inputActions.FindActionMap("Player", throwIfNotFound: true)
                                            .FindAction("Move", throwIfNotFound: true);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
             }
         }
 
