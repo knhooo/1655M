@@ -45,6 +45,7 @@ namespace Game.Player
         public event Action<int, bool> HitDealt;            // (피해량, 치명타 여부) 타격 시
         public event Action<int> HpChanged;                 // 현재 HP
         public event Action<int> MaxHpChanged;              // 최대 HP (런 시작 시)
+        public event Action<int, Vector3> DamageTaken;      // (받은 피해량, 피해원 월드 위치)
         public event Action Died;
         public event Action DashStarted;
         public event Action DashEnded;
@@ -120,9 +121,9 @@ namespace Game.Player
         }
 
         /// <summary>이번 타격 피해. 치명타 확률에 따라 배수 적용. HitDealt 이벤트도 발생.</summary>
-        private int RollHit()
+        private int RollHit(out bool crit)
         {
-            bool crit = UnityEngine.Random.value * 100f < _critChance;
+            crit = UnityEngine.Random.value * 100f < _critChance;
             int dmg = crit ? Mathf.RoundToInt(_damage * _critMultiplier) : _damage;
             HitDealt?.Invoke(dmg, crit);
             return dmg;
@@ -217,7 +218,7 @@ namespace Game.Player
             int dmg = _map.ContactDamageAt(col, row);
             if (dmg > 0)
             {
-                Damage(dmg);
+                Damage(dmg, _map.CellToWorld(col, row));
                 // TODO: 방향별 피격 연출 / 넉백 / 사운드
             }
         }
@@ -261,7 +262,8 @@ namespace Game.Player
             {
                 // 이동하지 않고 그 칸을 타격 — 지층이든 적이든 동일하게 HP 를 깎는다.
                 BlockData before = _map.GetBlock(tc, tr);
-                _map.DamageCell(tc, tr, RollHit());
+                int hit = RollHit(out bool crit);
+                _map.DamageCell(tc, tr, hit, crit);
                 if (before.IsSolid) // 지층 블록이었을 때만 채굴 이벤트 (적 타격 연출은 별도)
                 {
                     Dug?.Invoke(tc, tr, before);
@@ -355,7 +357,8 @@ namespace Game.Player
                         }
                         if (_map.IsSolid(c, tr))
                         {
-                            _map.DamageCell(c, tr, Mathf.RoundToInt(RollHit() * damageMultiplier));
+                            int hit = Mathf.RoundToInt(RollHit(out bool crit) * damageMultiplier);
+                            _map.DamageCell(c, tr, hit, crit);
                         }
                         DashAffectedCell?.Invoke(c, tr);
                     }
@@ -415,7 +418,8 @@ namespace Game.Player
         // 체력 (뼈대)
         // ------------------------------------------------------------------
 
-        public void Damage(int amount)
+        /// <param name="source">피해원 월드 위치 (데미지 텍스트가 여기서 생성됨).</param>
+        public void Damage(int amount, Vector3 source)
         {
             if (amount <= 0 || !IsAlive)
             {
@@ -423,6 +427,7 @@ namespace Game.Player
             }
 
             _hp = Mathf.Max(0, _hp - amount);
+            DamageTaken?.Invoke(amount, source);
             HpChanged?.Invoke(_hp);
             // TODO: 무적시간 / 피격 넉백 / 히트 연출
 

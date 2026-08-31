@@ -101,6 +101,8 @@ namespace Game.Map
         public event Action<GridEntity> EntitySpawned;
         /// <summary>엔티티가 파괴로 제거될 때 (회수와 구분).</summary>
         public event Action<GridEntity> EntityCleared;
+        /// <summary>한 칸이 피해를 받았을 때: (월드 위치, 피해량, 치명타 여부, 엔티티인가). 데미지 텍스트용.</summary>
+        public event Action<Vector3, int, bool, bool> DamageDealt;
 
         // 상태 -----------------------------------------------------------
         private readonly Dictionary<int, MapRow> _rows = new();
@@ -570,7 +572,7 @@ namespace Game.Map
         /// 특정 칸에 피해를 준다. 엔티티가 있으면 엔티티에, 없으면 지층 블록에 적용.
         /// </summary>
         /// <returns>이번 호출로 대상이 파괴됐으면 true.</returns>
-        public bool DamageCell(int col, int row, int amount)
+        public bool DamageCell(int col, int row, int amount, bool isCrit = false)
         {
             if (!InBounds(col, row) || amount <= 0)
             {
@@ -585,6 +587,7 @@ namespace Game.Map
             GridEntity entity = mapRow.Entities[col];
             if (entity != null)
             {
+                DamageDealt?.Invoke(entity.transform.position, amount, isCrit, true); // 엔티티 중심
                 return entity.ApplyDamage(amount); // 사망 시 내부에서 ClearEntity 호출
             }
 
@@ -594,6 +597,8 @@ namespace Game.Map
             {
                 return false;
             }
+
+            DamageDealt?.Invoke(CellToWorld(col, row), amount, isCrit, false);
 
             data.Hp -= amount;
 

@@ -330,6 +330,9 @@ MonoBehaviour:
   _soilHp: 1
   _rockHp: 3
   _oreHp: 5
+  _soilContactDamage: 5
+  _rockContactDamage: 16
+  _oreContactDamage: 27
   _surfaceRows: 1
   _layers:
   - type: 1
@@ -2090,6 +2093,8 @@ GameObject:
   m_Component:
   - component: {fileID: 905301201}
   - component: {fileID: 905301202}
+  - component: {fileID: 905301204}
+  - component: {fileID: 905301203}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2137,6 +2142,30 @@ MonoBehaviour:
   _rewindMinDuration: 0.6
   _rewindMaxDuration: 2.5
   _resultHold: 2.5
+--- !u!114 &905301203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 905301198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 860dd09d13326384a8c5743cfdae5470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Economy.RunWallet
+--- !u!114 &905301204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 905301198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 994e34b382955bb45a02214f9db98ab5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Equipment.RunInventory
 --- !u!1 &1150944887
 GameObject:
   m_ObjectHideFlags: 0
@@ -2389,6 +2418,58 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!1 &1310489299
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1310489301}
+  - component: {fileID: 1310489300}
+  m_Layer: 0
+  m_Name: DamageNumbers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1310489300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310489299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b05ac3d265a52e14ab77ed169266d099, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Juice.DamageNumbers
+  _prefab: {fileID: 152717466003496126, guid: fbffce07d30126c44a8657cd51c1775a, type: 3}
+  _player: {fileID: 1748223057}
+  _map: {fileID: 254449021}
+  _playerHitColor: {r: 1, g: 0, b: 1, a: 1}
+  _enemyHitColor: {r: 0.35, g: 1, b: 0.4, a: 1}
+  _critColor: {r: 1, g: 0.25, b: 0.2, a: 1}
+  _showBlockDamage: 1
+  _prewarm: 24
+--- !u!4 &1310489301
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310489299}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1452715292
 GameObject:
   m_ObjectHideFlags: 0
@@ -2702,8 +2783,6 @@ MonoBehaviour:
   _fallDuration: 0.06
   _digInterval: 0.12
   _stepInterval: 0.04
-  _digPower: 1
-  _maxHp: 1
   _showDebugHud: 1
 --- !u!4 &1748223059
 Transform:
@@ -2755,7 +2834,7 @@ MonoBehaviour:
   _icon: {fileID: 0}
   _cooldown: 5
   _distance: 5
-  _digPower: 3
+  _damageMultiplier: 2
   _widthRadius: 1
   _stepDuration: 0.03
 --- !u!1 &1803071503
@@ -3513,6 +3592,7 @@ SceneRoots:
   - {fileID: 3038169110849236353}
   - {fileID: 254449020}
   - {fileID: 905301201}
+  - {fileID: 1310489301}
   - {fileID: 1748223059}
   - {fileID: 1952350924}
   - {fileID: 666404566}

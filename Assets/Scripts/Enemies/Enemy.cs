@@ -83,7 +83,7 @@ namespace Game.Enemies
 
             if (IsPlayerAdjacent(pc.Column, pc.Row))
             {
-                pc.Damage(_contactDamage);
+                pc.Damage(_contactDamage, transform.position);
                 _contactCooldown = _contactInterval;
             }
         }
