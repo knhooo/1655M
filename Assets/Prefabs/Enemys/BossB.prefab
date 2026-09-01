@@ -270,4 +270,4 @@ MonoBehaviour:
   _hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
   _hitFlashTime: 0.08
   _deathBurstPrefab: {fileID: 764495013451340776, guid: c5d2727931e17f547a78c750129f3bcd, type: 3}
-  _deathBurstLifetime: 3
+  _deathBurstLifetime: 1
