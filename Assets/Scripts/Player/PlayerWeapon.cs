@@ -54,6 +54,7 @@ namespace Game.Player
         private Sprite _effectSprite;
         private float _weaponScale = 1f;
         private float _effectScale = 1f;
+        private float _effectAngleOffset;
         private Vector3 _weaponBaseScale = Vector3.one;
         private Coroutine _swing;
 
@@ -119,11 +120,13 @@ namespace Game.Player
                 _effectSprite = _iconSet.GetEffect(r.Value);
                 _weaponScale = _iconSet.GetSpriteScale(r.Value);
                 _effectScale = _iconSet.GetEffectScale(r.Value);
+                _effectAngleOffset = _iconSet.GetEffectAngleOffset(r.Value);
             }
             else
             {
                 _weaponScale = 1f;
                 _effectScale = 1f;
+                _effectAngleOffset = 0f;
                 if (_effect != null)
                 {
                     _effectSprite = _effect.sprite;
@@ -208,12 +211,21 @@ namespace Game.Player
         {
             if (_effect == null)
             {
+                Debug.LogWarning("[PlayerWeapon] _effect (SlashEffect SpriteRenderer) 미할당", this);
                 return;
             }
             if (_effectSprite != null)
             {
                 _effect.sprite = _effectSprite;
             }
+            if (_effect.sprite == null)
+            {
+                Debug.LogWarning("[PlayerWeapon] 이펙트 스프라이트 없음 — SwordIconSet 의 effect / _fallbackEffect / 프리팹 스프라이트 확인", this);
+            }
+            // 이전 페이드로 알파가 0으로 남아 있을 수 있음 → 항상 불투명으로 리셋
+            Color c0 = _effect.color;
+            c0.a = 1f;
+            _effect.color = c0;
             _effect.flipY = faceLeft;
 
             if (_effectRadius > 0f)
@@ -229,7 +241,7 @@ namespace Game.Player
                 _effect.transform.localPosition = _effectHomePos;
             }
 
-            _effect.transform.localRotation = Quaternion.Euler(0f, 0f, center + _effectForwardOffset);
+            _effect.transform.localRotation = Quaternion.Euler(0f, 0f, center + _effectForwardOffset + _effectAngleOffset);
             _effect.enabled = true;
             StartCoroutine(EffectRoutine());
         }

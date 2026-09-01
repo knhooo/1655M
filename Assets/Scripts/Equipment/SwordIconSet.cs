@@ -24,6 +24,8 @@ namespace Game.Equipment
             public float spriteScale = 1f;
             [Tooltip("슬래시 이펙트 크기 배수. 0/미설정 = 1.")]
             public float effectScale = 1f;
+            [Tooltip("이 등급 이펙트 스프라이트만의 각도 보정(도). 아트가 비스듬한 경우.")]
+            public float effectAngleOffset = 0f;
         }
 
         [SerializeField] private Entry[] _entries;
@@ -58,6 +60,13 @@ namespace Game.Equipment
         {
             Entry e = Find(rarity);
             return e != null && e.effectScale > 0f ? e.effectScale : 1f;
+        }
+
+        /// <summary>이 등급 이펙트 스프라이트만의 각도 보정(도).</summary>
+        public float GetEffectAngleOffset(SwordRarity rarity)
+        {
+            Entry e = Find(rarity);
+            return e != null ? e.effectAngleOffset : 0f;
         }
 
         private Entry Find(SwordRarity rarity)

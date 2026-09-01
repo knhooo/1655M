@@ -96,7 +96,8 @@ namespace Game.Skills
 
             if (_button != null)
             {
-                bool ready = skill.IsReady;
+                // 쿨다운만 기준 — IsReady 는 이동/채굴 중(CanActivate=false)이라 매 스텝 깜빡임.
+                bool ready = skill.CooldownProgress >= 1f;
                 if (!_stateInit || ready != _lastReady)
                 {
                     _button.interactable = ready;
