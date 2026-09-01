@@ -31,7 +31,7 @@ namespace Game.Player
 
         // ---- 기본값 ----
         public const float BaseDamage = 17f;
-        public const int BaseMaxHp = 1000;
+        public const int BaseMaxHp = 100;   // 임시(테스트용). 원래 1000
         public const float BaseCritChance = 5f;   // %
         public const float CritMultiplier = 2f;
 
