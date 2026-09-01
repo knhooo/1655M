@@ -49,6 +49,14 @@ namespace Game.Player
         internal const string GodModeKey = "debug_godmode";
         public bool GodMode => _godMode;
 
+        /// <summary>런타임 무적 토글. PlayerPrefs 에도 저장돼 다음 런에도 유지.</summary>
+        public void SetGodMode(bool on)
+        {
+            _godMode = on;
+            PlayerPrefs.SetInt(GodModeKey, on ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
         // 이벤트 ----------------------------------------------------------
         public event Action<int, int> CellChanged;          // (col, row) 새 칸에 도착
         public event Action<int, int, BlockData> Dug;       // (col, row, 파괴 전 데이터) 채굴 시도

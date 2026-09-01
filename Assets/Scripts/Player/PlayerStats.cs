@@ -236,22 +236,51 @@ namespace Game.Player
             return best;
         }
 
-#if UNITY_EDITOR
-        [UnityEditor.MenuItem("1655M/Reset Progress (PlayerPrefs)")]
-        private static void ResetProgress()
+        // ------------------------------------------------------------------
+        // 치트 (에디터 메뉴 + 인게임 치트키 CheatKeys 가 공유)
+        // ------------------------------------------------------------------
+
+        public static bool GodMode => PlayerPrefs.GetInt(PlayerController.GodModeKey, 0) == 1;
+
+        /// <summary>무적 토글. 재생 중이면 즉시 반영 + PlayerPrefs 저장.</summary>
+        public static bool ToggleGodMode()
         {
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.Save();
-            Debug.Log("[PlayerStats] 진행 데이터 초기화");
+            bool on = !GodMode;
+            if (PlayerController.Instance != null)
+            {
+                PlayerController.Instance.SetGodMode(on);
+            }
+            else
+            {
+                PlayerPrefs.SetInt(PlayerController.GodModeKey, on ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+            Changed?.Invoke();
+            return on;
         }
 
-        [UnityEditor.MenuItem("1655M/Debug: All Swords Unlocked")]
-        private static void ToggleAllSwordsUnlocked()
+        /// <summary>전 등급 검 보유 토글.</summary>
+        public static bool ToggleAllSwordsUnlocked()
         {
             RunInventory.AllUnlocked = !RunInventory.AllUnlocked;
             Changed?.Invoke();
-            Debug.Log($"[PlayerStats] All Swords Unlocked = {RunInventory.AllUnlocked}");
+            return RunInventory.AllUnlocked;
         }
+
+        /// <summary>모든 저장 데이터(강화·재화·최고기록·보유검) 초기화.</summary>
+        public static void ResetAllProgress()
+        {
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+        }
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("1655M/Reset Progress (PlayerPrefs)")]
+        private static void ResetProgress() => ResetAllProgress();
+
+        [UnityEditor.MenuItem("1655M/Debug: All Swords Unlocked")]
+        private static void ToggleAllSwordsUnlockedMenu() => ToggleAllSwordsUnlocked();
 
         [UnityEditor.MenuItem("1655M/Debug: All Swords Unlocked", true)]
         private static bool ToggleAllSwordsUnlockedValidate()
@@ -261,17 +290,7 @@ namespace Game.Player
         }
 
         [UnityEditor.MenuItem("1655M/Debug: Player Invincible")]
-        private static void TogglePlayerInvincible()
-        {
-            bool on = PlayerPrefs.GetInt(PlayerController.GodModeKey, 0) == 1;
-            PlayerPrefs.SetInt(PlayerController.GodModeKey, on ? 0 : 1);
-            PlayerPrefs.Save();
-            if (PlayerController.Instance != null)
-            {
-                // 플레이 중 즉시 반영: 다음 씬부터가 아니라 지금도
-                Debug.Log($"[PlayerStats] Player Invincible = {!on} (재생 중이면 재시작해야 완전 반영)");
-            }
-        }
+        private static void TogglePlayerInvincible() => ToggleGodMode();
 
         [UnityEditor.MenuItem("1655M/Debug: Player Invincible", true)]
         private static bool TogglePlayerInvincibleValidate()
