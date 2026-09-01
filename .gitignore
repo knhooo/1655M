@@ -125,3 +125,15 @@ __pycache__/
 # Assignment working notes stay tracked on purpose — do NOT ignore:
 #   AI_USAGE.md, SPEC_NOTES.md, docs/
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# 효과음ラボ (soundeffect-lab.info) SFX — 게임 내 사용은 무료/허용이지만
+# "재배포 금지" 약관 → 원본 파일을 저장소에 올리지 않는다.
+# 로컬에만 두고, 빌드(.exe)에는 정상 포함됨. 출처는 docs/ 에 명시.
+# ---------------------------------------------------------------------------
+/[Aa]ssets/LisencedAssets/Audio/
+/[Aa]ssets/LisencedAssets/Audio.meta
+
+# Unity 크래시 복구 폴더
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta

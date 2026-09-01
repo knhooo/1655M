@@ -96,8 +96,7 @@ MonoBehaviour:
     pitchVariance: 0
   - id: 15
     clips:
-    - {fileID: 8300000, guid: 0790e317a10038f4e8e1e4b740b57f35, type: 3}
-    - {fileID: 8300000, guid: 1e18250f9e5ee6749905116f82139a19, type: 3}
+    - {fileID: 8300000, guid: a051e6a308017ff4cb46ff59e6f4bcb5, type: 3}
     volume: 0.95
     pitchVariance: 0
   - id: 16
@@ -115,27 +114,21 @@ MonoBehaviour:
     pitchVariance: 0.03
   - id: 18
     clips:
-    - {fileID: 8300000, guid: 23caaecdfa4ad424bb07ef0c3afcfdd8, type: 3}
-    - {fileID: 8300000, guid: cdf95fd36b52af44bb19c696ce59ca0d, type: 3}
+    - {fileID: 8300000, guid: 2d2fad3dec6f59b4da036f6c4ada8f13, type: 3}
     volume: 0.7
     pitchVariance: 0.02
   - id: 19
     clips:
-    - {fileID: 8300000, guid: fc418bcab3394ad449a3af6287c32350, type: 3}
-    - {fileID: 8300000, guid: 1247dd702aa98ff428efdd1ceb0ab704, type: 3}
-    - {fileID: 8300000, guid: 8b32c877ad4816646a02710e78c9af07, type: 3}
+    - {fileID: 8300000, guid: 896246dbb687475418db9635263726ca, type: 3}
     volume: 0.55
     pitchVariance: 0.09
   - id: 20
     clips:
-    - {fileID: 8300000, guid: 7fcb1bdf26bcf8c48a61b38bd5509d7c, type: 3}
-    - {fileID: 8300000, guid: 8bc05de661744314983ec7c896104c15, type: 3}
+    - {fileID: 8300000, guid: 9918ccd7d7468fd4d8e1ba6b4a30de83, type: 3}
     volume: 0.7
     pitchVariance: 0.06
   - id: 21
     clips:
-    - {fileID: 8300000, guid: 736c76dae27d02e43a854c542ade5516, type: 3}
-    - {fileID: 8300000, guid: f35726a0c36b2b74faced8e7fd9b0765, type: 3}
-    - {fileID: 8300000, guid: 68823dd7642354f468ef6d2854225cb4, type: 3}
+    - {fileID: 8300000, guid: 6b851bcf160b4af4fa072e927725d3cb, type: 3}
     volume: 0.75
     pitchVariance: 0.05
