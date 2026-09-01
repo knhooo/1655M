@@ -37,6 +37,8 @@ namespace Game.Flow
         [Header("Slide")]
         [Tooltip("숨길 때 위로 이동시킬 거리(px). 0 이면 패널 높이 + 200 자동.")]
         [SerializeField] private float _hiddenOffsetY = 1400f;
+        [Tooltip("보일 때 씬에 배치한 위치보다 이만큼(px) 더 아래로 내린다. 양수 = 더 내려옴.")]
+        [SerializeField] private float _shownExtraDropY = 0f;
         [SerializeField] private float _slideDuration = 0.35f;
 
         private Vector2 _shownPos;
@@ -55,7 +57,7 @@ namespace Game.Flow
                 _rt = GetComponent<RectTransform>();
             }
 
-            _shownPos = _rt.anchoredPosition;
+            _shownPos = _rt.anchoredPosition + Vector2.down * _shownExtraDropY;
             float offset = _hiddenOffsetY > 0f ? _hiddenOffsetY : _rt.rect.height + 200f;
             _hiddenPos = _shownPos + Vector2.up * offset;
 

@@ -122,7 +122,6 @@ namespace Game.Audio
             to.volume = 0f;
             to.Play();
 
-            float target = EffectiveVolume();
             float t = 0f;
             float dur = Mathf.Max(0.05f, _fadeTime);
             float fromStart = from.volume;
@@ -130,11 +129,12 @@ namespace Game.Audio
             {
                 t += Time.unscaledDeltaTime;
                 float k = t / dur;
-                to.volume = Mathf.Lerp(0f, target, k);
+                // 목표 볼륨을 매 프레임 다시 읽음 — 페이드 도중 슬라이더를 움직여도 즉시 반영
+                to.volume = Mathf.Lerp(0f, EffectiveVolume(), k);
                 from.volume = Mathf.Lerp(fromStart, 0f, k);
                 yield return null;
             }
-            to.volume = target;
+            to.volume = EffectiveVolume();
             from.volume = 0f;
             from.Stop();
 
