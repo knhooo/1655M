@@ -15,6 +15,9 @@ namespace Game.Enemies
     ///  - <b>플레이어가 처음 때린 뒤부터</b> <see cref="_attackInterval"/> 마다 패턴 1회: 텔레그래프(경고) → 딜레이 → 강타
     ///     · ColumnStrike : 플레이어가 선 세로 직선
     ///     · RowStrike    : 플레이어가 선 가로 직선
+    ///  - <b>페이즈 2</b> (HP 절반 이하): 공격이 더 빠르고(<see cref="_phase2AttackIntervalMult"/>),
+    ///    경고 시간이 짧아지고(<see cref="_phase2TelegraphMult"/>), 가로 강타는 안전지대가 좁아지고
+    ///    (<see cref="_phase2RowSafeCells"/>), 세로 강타는 좌우로 넓어진다(<see cref="_phase2ColumnWiden"/>).
     ///  - 패턴은 <see cref="ChooseAttack"/> / <see cref="BuildAttackCells"/> / <see cref="OnAttackStrike"/>
     ///    오버라이드로 서브클래스(Boss2)가 확장한다.
     ///
@@ -45,6 +48,16 @@ namespace Game.Enemies
         [Tooltip("ColumnStrike 세로 길이(칸). 보스 머리 위에서부터 위로.")]
         [SerializeField, Min(1)] private int _columnLength = 9;
 
+        [Header("페이즈 2 (HP 절반 이하) — 난이도 상승")]
+        [Tooltip("공격 간격 배수. 0.78 = 약 22% 더 자주 공격 (기믹 사이 텀 확보).")]
+        [SerializeField, Range(0.2f, 1f)] private float _phase2AttackIntervalMult = 0.78f;
+        [Tooltip("경고 시간 배수. 낮을수록 피할 시간이 짧다.")]
+        [SerializeField, Range(0.2f, 1f)] private float _phase2TelegraphMult = 0.7f;
+        [Tooltip("페이즈 2 가로 강타에서 남기는 연속 안전 칸 수. (페이즈 1 은 oxoxo 로 절반이 안전)")]
+        [SerializeField, Min(1)] private int _phase2RowSafeCells = 2;
+        [Tooltip("페이즈 2 세로 강타를 좌우로 넓히는 폭(칸). 1 = 3열 동시.")]
+        [SerializeField, Min(0)] private int _phase2ColumnWiden = 1;
+
         [Header("사망 보상")]
         [SerializeField, Min(0)] private int _coinReward = 150;
 
@@ -74,7 +87,6 @@ namespace Game.Enemies
         protected int _attackIndex;
 
         private readonly List<Vector2Int> _cells = new();
-        private WaitForSeconds _telegraphWait;
 
         protected override void OnPlaced()
         {
@@ -85,7 +97,6 @@ namespace Game.Enemies
             _engaged = false;
             _attackIndex = 0;
             Phase = 1;
-            _telegraphWait = new WaitForSeconds(Mathf.Max(0.05f, _telegraphTime));
             HealthChanged?.Invoke(_hp, MaxHp);
         }
 
@@ -151,7 +162,8 @@ namespace Game.Enemies
                 _attackCd -= Time.deltaTime;
                 if (_attackCd <= 0f)
                 {
-                    _attackCd = Mathf.Max(0.1f, _attackInterval);
+                    float interval = _attackInterval * (Phase >= 2 ? _phase2AttackIntervalMult : 1f);
+                    _attackCd = Mathf.Max(0.1f, interval);
                     if (playerOk)
                     {
                         StartCoroutine(AttackRoutine(ChooseAttack(), pc));
@@ -173,9 +185,11 @@ namespace Game.Enemies
 
             _cells.Clear();
             BuildAttackCells(attackId, pc.Column, pc.Row, _cells);
-            AttackTelegraph?.Invoke(_cells, _telegraphTime);
 
-            yield return _telegraphWait;
+            float telegraph = Mathf.Max(0.05f, _telegraphTime * (Phase >= 2 ? _phase2TelegraphMult : 1f));
+            AttackTelegraph?.Invoke(_cells, telegraph);
+
+            yield return new WaitForSeconds(telegraph);
 
             if (_hp > 0)
             {
@@ -196,15 +210,32 @@ namespace Game.Enemies
         {
             if (attackId == AttackRowStrike)
             {
-                // 격자 가로 한 줄을 듬성듬성 (oxoxo...). 매번 시작 칸을 랜덤으로 → 안전지대가 바뀜
-                int off = UnityEngine.Random.Range(0, 2);
-                for (int c = off; c < MapGenerator.Columns; c += 2)
+                if (Phase >= 2)
                 {
-                    cells.Add(new Vector2Int(c, prow));
+                    // 페이즈 2: 연속된 _phase2RowSafeCells 칸만 안전, 나머지 전부 강타
+                    int safe = Mathf.Clamp(_phase2RowSafeCells, 1, MapGenerator.Columns - 1);
+                    int safeStart = UnityEngine.Random.Range(0, MapGenerator.Columns - safe + 1);
+                    for (int c = 0; c < MapGenerator.Columns; c++)
+                    {
+                        if (c < safeStart || c >= safeStart + safe)
+                        {
+                            cells.Add(new Vector2Int(c, prow));
+                        }
+                    }
+                }
+                else
+                {
+                    // 페이즈 1: 듬성듬성 (oxoxo...). 매번 시작 칸을 랜덤으로 → 안전지대가 바뀜
+                    int off = UnityEngine.Random.Range(0, 2);
+                    for (int c = off; c < MapGenerator.Columns; c += 2)
+                    {
+                        cells.Add(new Vector2Int(c, prow));
+                    }
                 }
             }
             else // AttackColumnStrike — 보스 머리 위에서부터 위로 _columnLength 칸 (충격파는 아래→위)
             {
+                int widen = Phase >= 2 ? Mathf.Max(0, _phase2ColumnWiden) : 0;
                 int bottom = AnchorRow - 1;
                 for (int i = 0; i < _columnLength; i++)
                 {
@@ -213,7 +244,14 @@ namespace Game.Enemies
                     {
                         break;
                     }
-                    cells.Add(new Vector2Int(pcol, r));
+                    for (int w = -widen; w <= widen; w++)
+                    {
+                        int c = pcol + w;
+                        if (c >= 0 && c < MapGenerator.Columns)
+                        {
+                            cells.Add(new Vector2Int(c, r));
+                        }
+                    }
                 }
             }
         }
