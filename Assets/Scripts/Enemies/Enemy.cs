@@ -26,6 +26,9 @@ namespace Game.Enemies
         [SerializeField, Min(0)] private int _coinRewardMin = 1;
         [SerializeField, Min(0)] private int _coinRewardMax = 2;
 
+        [Tooltip("사망 시 튕겨 날아가는 연출. 비우면 같은 오브젝트에서 자동 탐색, 없으면 즉시 사라짐.")]
+        [SerializeField] private DeathToss _deathToss;
+
         /// <summary>사망 시: (앵커 col, 앵커 row, 지급한 Coin). 점수/연출용.</summary>
         public event Action<int, int, int> Killed;
 
@@ -36,11 +39,37 @@ namespace Game.Enemies
 
         private int _hp;
         private float _contactCooldown;
+        private bool _deathTossResolved;
+
+        private void Reset()
+        {
+            _deathToss = GetComponent<DeathToss>();
+        }
+
+        private void Awake()
+        {
+            ResolveDeathToss();
+        }
+
+        private void ResolveDeathToss()
+        {
+            if (_deathTossResolved)
+            {
+                return;
+            }
+            if (_deathToss == null)
+            {
+                _deathToss = GetComponent<DeathToss>(); // 같은 오브젝트여야 함 (자식이면 스프라이트가 안 따라감)
+            }
+            _deathTossResolved = true;
+        }
 
         protected override void OnPlaced()
         {
+            ResolveDeathToss();
             _hp = Mathf.Max(1, _maxHp);
             _contactCooldown = 0f;
+            transform.rotation = Quaternion.identity; // 사망 연출로 돌아간 회전 복구
             HealthChanged?.Invoke(_hp, MaxHp);
         }
 
@@ -60,7 +89,17 @@ namespace Game.Enemies
                 int coin = UnityEngine.Random.Range(_coinRewardMin, Mathf.Max(_coinRewardMin, _coinRewardMax) + 1);
                 RunWallet.Instance?.Add(CurrencyType.Coin, coin);
                 Killed?.Invoke(AnchorCol, AnchorRow, coin);
-                Map.ClearEntity(this); // 풋프린트 정리 + 풀 반납
+
+                MapGenerator board = Map;
+                if (_deathToss != null && board != null && board.DetachEntity(this))
+                {
+                    // 격자에서만 떼어내 칸을 즉시 열어주고, 튕겨 날아간 뒤 풀 반납
+                    _deathToss.Play(() => board.RecycleDetached(this));
+                }
+                else
+                {
+                    board?.ClearEntity(this); // 폴백: 즉시 사라짐
+                }
                 return true;
             }
             return false;
@@ -68,9 +107,9 @@ namespace Game.Enemies
 
         private void Update()
         {
-            if (Map == null)
+            if (Map == null || _hp <= 0)
             {
-                return;
+                return; // 사망 연출 중엔 접촉 피해 없음
             }
 
             if (_contactCooldown > 0f)

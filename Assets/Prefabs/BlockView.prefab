@@ -112,5 +112,11 @@ MonoBehaviour:
     sprite: {fileID: 8486786076564984107, guid: c3c304333efec37409bf2f973f657d65, type: 3}
   - type: 3
     sprite: {fileID: -8887993299131670151, guid: c3c304333efec37409bf2f973f657d65, type: 3}
-  _tintByType: 1
-  _darkenByDamage: 1
+  _tossOnDestroy: 1
+  _upSpeedMin: 2.5
+  _upSpeedMax: 5
+  _sideSpeed: 3.98
+  _gravity: 22
+  _spinSpeed: 300
+  _tossMaxLifetime: 3
+  _tossSortingBoost: 20

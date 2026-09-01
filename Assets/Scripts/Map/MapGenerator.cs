@@ -27,6 +27,8 @@ namespace Game.Map
 
         [Header("References")]
         [SerializeField] private BlockView _blockPrefab;
+        [Tooltip("파괴된 블록이 튕김 연출을 할 확률 (BlockView._tossOnDestroy 가 켜져 있어야 함).")]
+        [SerializeField, Range(0f, 1f)] private float _debrisChance = 1f;
         [Tooltip("스트리밍 기준 대상. 비우면 PlayerController.Instance 사용.")]
         [SerializeField] private Transform _tracked;
         [Tooltip("생성물의 부모이자 그리드 (col 0, row 0) 의 원점. 비우면 이 오브젝트가 기준.")]
@@ -47,9 +49,9 @@ namespace Game.Map
         [SerializeField] private int _rowsAhead = 20;
         [Tooltip("추적 대상 위로 이만큼 벗어난 행은 회수한다. (_keepPassedTerrain 이면 무시)")]
         [SerializeField] private int _rowsBehind = 6;
-        [Tooltip("지나온(위쪽) 지형을 회수하지 않고 그대로 남긴다 — 원작처럼 파낸 터널이 유지됨.")]
+        [Tooltip("지나온(위쪽) 지형·엔티티를 남긴다 — 원작처럼 터널/상자가 유지됨. 벗어난 엔티티는 동작만 정지.")]
         [SerializeField] private bool _keepPassedTerrain = true;
-        [Tooltip("_keepPassedTerrain 이어도 이만큼 위로 벗어나면 회수 (0 = 무제한). 메모리 안전장치.")]
+        [Tooltip("_keepPassedTerrain 이어도 이만큼 위로 벗어나면 완전 회수 (0 = 무제한). 메모리 안전장치.")]
         [SerializeField] private int _maxRowsBehind = 300;
 
         [Header("Strata HP (임시 밸런스 - 플레이어 대미지 17 기준: 1 / 3 / 6 타)")]
@@ -174,7 +176,7 @@ namespace Game.Map
 
         private int _topRow;
         private int _bottomRow;
-        private int _entityCulledRow; // _keepPassedTerrain 시: 이 행 위쪽은 엔티티가 이미 회수됨
+        private int _entityFrozenRow; // _keepPassedTerrain 시: 이 행 위쪽 엔티티는 이미 동작 정지됨
         private bool _initialized;
         private bool _streaming = true;
 
@@ -248,17 +250,17 @@ namespace Game.Map
                 _bottomRow = wantBottom;
             }
 
-            // 지형 유지 모드: 블록은 남기되 위로 벗어난 적/상자는 회수
+            // 지형 유지 모드: 블록도 엔티티도 남기되, 위로 벗어난 엔티티는 동작만 멈춘다
             if (_keepPassedTerrain)
             {
-                int entityCullTop = Mathf.Max(0, focusRow - _rowsBehind);
-                for (int row = _entityCulledRow; row < entityCullTop; row++)
+                int freezeTop = Mathf.Max(0, focusRow - _rowsBehind);
+                for (int row = _entityFrozenRow; row < freezeTop; row++)
                 {
-                    CullRowEntities(row);
+                    FreezeRowEntities(row);
                 }
-                if (entityCullTop > _entityCulledRow)
+                if (freezeTop > _entityFrozenRow)
                 {
-                    _entityCulledRow = entityCullTop;
+                    _entityFrozenRow = freezeTop;
                 }
             }
 
@@ -269,8 +271,9 @@ namespace Game.Map
             _topRow = wantTop;
         }
 
-        /// <summary>행의 블록/뷰는 그대로 두고 격자 엔티티(적·상자·재화)만 회수한다.</summary>
-        private void CullRowEntities(int row)
+        /// <summary>행의 엔티티(적·상자·재화)를 격자에 남긴 채 동작만 멈춘다 (Update 정지).
+        /// 실제 회수는 행이 <see cref="ReleaseRow"/> 될 때.</summary>
+        private void FreezeRowEntities(int row)
         {
             if (!_rows.TryGetValue(row, out MapRow mapRow))
             {
@@ -279,10 +282,9 @@ namespace Game.Map
             for (int col = 0; col < Columns; col++)
             {
                 GridEntity e = mapRow.Entities[col];
-                if (e != null)
+                if (e != null && e.AnchorRow == row) // 앵커 행에서 한 번만
                 {
-                    mapRow.Entities[col] = null;
-                    DespawnEntity(e); // 다른 활성 칸까지 정리 + 풀 반납 (idempotent)
+                    e.SetFrozen(true);
                 }
             }
         }
@@ -721,6 +723,34 @@ namespace Game.Map
             DespawnEntity(entity);
         }
 
+        /// <summary>
+        /// 엔티티를 격자에서만 떼어낸다 — 칸은 즉시 통행 가능해지지만 오브젝트/풀 반납은 하지 않는다.
+        /// 사망 연출(튕겨 날아가기) 중인 적을 위해. 연출이 끝나면 <see cref="RecycleDetached"/> 를 호출해야 한다.
+        /// </summary>
+        /// <returns>떼어내는 데 성공했으면 true (연출 진행 가능). false 면 그냥 <see cref="ClearEntity"/> 할 것.</returns>
+        public bool DetachEntity(GridEntity entity)
+        {
+            if (entity == null || !_entityPrefabOf.ContainsKey(entity))
+            {
+                return false;
+            }
+            EntityCleared?.Invoke(entity);
+            ClearFootprint(entity);
+            return true;
+        }
+
+        /// <summary>사망 연출이 끝난(<see cref="DetachEntity"/> 된) 엔티티를 풀에 반납한다.</summary>
+        public void RecycleDetached(GridEntity entity)
+        {
+            if (entity == null || !_entityPrefabOf.TryGetValue(entity, out GridEntity prefab))
+            {
+                return;
+            }
+            _entityPrefabOf.Remove(entity);
+            entity.Recycle();
+            GetPool(prefab).Release(entity);
+        }
+
         /// <summary>풋프린트 정리 + 풀 반납. 여러 번 호출해도 안전.</summary>
         private void DespawnEntity(GridEntity entity)
         {
@@ -729,7 +759,14 @@ namespace Game.Map
                 return;
             }
             _entityPrefabOf.Remove(entity);
+            ClearFootprint(entity);
+            entity.Recycle();
+            GetPool(prefab).Release(entity);
+        }
 
+        /// <summary>엔티티가 점유하던 칸/예약을 비운다 (오브젝트·풀은 건드리지 않음).</summary>
+        private void ClearFootprint(GridEntity entity)
+        {
             Vector2Int s = entity.Size;
             for (int dy = 0; dy < s.y; dy++)
             {
@@ -745,9 +782,6 @@ namespace Game.Map
                     _pendingEntityCells.Remove(CellKey(cc, rr));
                 }
             }
-
-            entity.Recycle();
-            GetPool(prefab).Release(entity);
         }
 
         private ObjectPool<GridEntity> GetPool(GridEntity prefab)
@@ -944,8 +978,17 @@ namespace Game.Map
             mapRow.Cells[col] = BlockData.Empty;
             if (mapRow.Views[col] != null)
             {
-                _blockPool.Release(mapRow.Views[col]);
-                mapRow.Views[col] = null;
+                BlockView bv = mapRow.Views[col];
+                mapRow.Views[col] = null; // 격자에서 분리 — 이후는 뷰 스스로 처리
+
+                if (bv.TossOnDestroy && (_debrisChance >= 1f || UnityEngine.Random.value < _debrisChance))
+                {
+                    bv.PlayDestroyToss(() => _blockPool.Release(bv));
+                }
+                else
+                {
+                    _blockPool.Release(bv);
+                }
             }
 
             BlockDestroyed?.Invoke(col, row, destroyed);

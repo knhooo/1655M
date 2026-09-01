@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 8040931962222240077}
   - component: {fileID: 8885432930543749996}
   - component: {fileID: 6444968416775781832}
+  - component: {fileID: 5150853568469972035}
   m_Layer: 0
   m_Name: Enemy_Small2
   m_TagString: Untagged
@@ -145,6 +146,7 @@ MonoBehaviour:
   _contactInterval: 0.8
   _coinRewardMin: 1
   _coinRewardMax: 2
+  _deathToss: {fileID: 0}
 --- !u!114 &6444968416775781832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,6 +166,24 @@ MonoBehaviour:
   _fillRenderer: {fileID: 0}
   _flashColor: {r: 1, g: 1, b: 1, a: 1}
   _flashDuration: 0.12
+--- !u!114 &5150853568469972035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196029678070584734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7215177c8aaef8b409b6ed7f5bcb3ed0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.DeathToss
+  _upSpeedMin: 4
+  _upSpeedMax: 7.5
+  _sideSpeed: 3
+  _gravity: 22
+  _spinSpeed: 420
+  _maxLifetime: 3
 --- !u!1 &2946394232561201054
 GameObject:
   m_ObjectHideFlags: 0

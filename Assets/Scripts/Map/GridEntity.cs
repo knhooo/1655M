@@ -23,6 +23,12 @@ namespace Game.Map
 
         protected MapGenerator Map { get; private set; }
 
+        /// <summary>
+        /// 플레이어가 위로 충분히 벗어나면 호출된다 — 오브젝트/스프라이트는 그대로 두고 동작만 멈춘다.
+        /// (행이 완전히 스트리밍 밖으로 나가면 그때 회수됨.) 기본: 이 컴포넌트를 비활성화해 Update 정지.
+        /// </summary>
+        public virtual void SetFrozen(bool frozen) => enabled = !frozen;
+
         /// <summary>풀 반납 시점 (MapGenerator 내부에서 구독).</summary>
         public event Action<GridEntity> Recycled;
 
@@ -32,6 +38,7 @@ namespace Game.Map
             AnchorCol = anchorCol;
             AnchorRow = anchorRow;
             transform.position = worldCenter;
+            enabled = true; // 이전에 얼려서 반납됐을 수 있음
             gameObject.SetActive(true);
             OnPlaced();
         }
