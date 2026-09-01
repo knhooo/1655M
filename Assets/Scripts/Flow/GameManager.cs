@@ -6,6 +6,7 @@ using Game.Map;
 using Game.CameraRig;
 using Game.Economy;
 using Game.Equipment;
+using Game.Audio;
 
 namespace Game.Flow
 {
@@ -121,6 +122,7 @@ namespace Game.Flow
             if (_resultScreen != null) _resultScreen.Hide();
             if (Player != null) Player.SetControlEnabled(false);
             if (_fader != null) _fader.FadeIn();
+            BgmPlayer.PlayTitle();
         }
 
         /// <summary>타이틀의 Play 버튼. 1번째 = 인벤토리 열기, 2번째 = 게임 시작.</summary>
@@ -172,6 +174,7 @@ namespace Game.Flow
             if (_inventoryUI != null) _inventoryUI.SlideOut();
             if (_hud != null) _hud.SetActive(true);
             if (Player != null) Player.SetControlEnabled(true);
+            BgmPlayer.PlayGameplay();
         }
 
         // ------------------------------------------------------------------

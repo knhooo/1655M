@@ -21,9 +21,15 @@ namespace Game.Audio
         [Tooltip("같은 사운드가 이 시간(초) 안에 또 오면 무시 — 기관총 방지.")]
         [SerializeField] private float _minRetrigger = 0.035f;
 
+        private const string VolumeKey = "sfx_volume";
+        private const string MutedKey = "sfx_muted";
+
         private AudioSource[] _sources;
         private int _next;
         private readonly Dictionary<SfxId, float> _lastPlayed = new();
+
+        public static float Volume => Instance != null ? Instance._masterVolume : 0.8f;
+        public static bool Muted => Instance != null && Instance._muted;
 
         private void Awake()
         {
@@ -33,6 +39,9 @@ namespace Game.Audio
                 return;
             }
             Instance = this;
+
+            _masterVolume = PlayerPrefs.GetFloat(VolumeKey, _masterVolume);
+            _muted = PlayerPrefs.GetInt(MutedKey, _muted ? 1 : 0) == 1;
 
             _sources = new AudioSource[Mathf.Max(2, _voices)];
             for (int i = 0; i < _sources.Length; i++)
@@ -60,6 +69,22 @@ namespace Game.Audio
 
         public static void Play(SfxId id) => Instance?.PlayInternal(id, null);
         public static void PlayAt(SfxId id, Vector3 worldPos) => Instance?.PlayInternal(id, worldPos);
+
+        public static void SetVolume(float v)
+        {
+            if (Instance == null) return;
+            Instance._masterVolume = Mathf.Clamp01(v);
+            PlayerPrefs.SetFloat(VolumeKey, Instance._masterVolume);
+            PlayerPrefs.Save();
+        }
+
+        public static void SetMuted(bool muted)
+        {
+            if (Instance == null) return;
+            Instance._muted = muted;
+            PlayerPrefs.SetInt(MutedKey, muted ? 1 : 0);
+            PlayerPrefs.Save();
+        }
 
         // ---- 내부 ----
 
