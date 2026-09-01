@@ -470,6 +470,75 @@ namespace Game.Player
             }
         }
 
+        /// <summary>
+        /// 단위 방향열(<paramref name="steps"/>)을 따라 연속 돌진. (아이템: ㄹ자 대시)
+        /// 각 칸의 지층·엔티티를 <paramref name="damageMultiplier"/> 배로 타격하고, 못 뚫으면 그 지점에서 정지.
+        /// dir 은 (±1,0)·(0,+1) 단위로 해석. 위(-y)와 범위 밖 열은 건너뛴다.
+        /// </summary>
+        public bool StartPathDash(Vector2Int[] steps, float damageMultiplier, float stepDuration)
+        {
+            if (steps == null || steps.Length == 0 || !CanDash())
+            {
+                return false;
+            }
+            StartCoroutine(PathDashRoutine(steps, Mathf.Max(0.1f, damageMultiplier), Mathf.Max(0.01f, stepDuration)));
+            return true;
+        }
+
+        private IEnumerator PathDashRoutine(Vector2Int[] steps, float damageMultiplier, float stepDuration)
+        {
+            _dashing = true;
+            DashStarted?.Invoke();
+            try
+            {
+                for (int i = 0; i < steps.Length; i++)
+                {
+                    if (!IsAlive)
+                    {
+                        yield break;
+                    }
+
+                    Vector2Int d = steps[i];
+                    int tc = _col + (d.x > 0 ? 1 : (d.x < 0 ? -1 : 0));
+                    int tr = _row + (d.y > 0 ? 1 : 0);   // 위로는 못 감
+
+                    if (tc < 0 || tc >= MapGenerator.Columns || (tc == _col && tr == _row))
+                    {
+                        continue;
+                    }
+
+                    if (_map.IsSolid(tc, tr))
+                    {
+                        int hit = Mathf.RoundToInt(RollHit(out bool crit) * damageMultiplier);
+                        _map.DamageCell(tc, tr, hit, crit);
+                    }
+                    DashAffectedCell?.Invoke(tc, tr);
+
+                    if (!_map.IsRowReady(tr) || _map.IsSolid(tc, tr))
+                    {
+                        yield break; // 못 뚫음 → 정지
+                    }
+
+                    _col = tc;
+                    _row = tr;
+                    BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
+                    CellChanged?.Invoke(_col, _row);
+                    CheckContactDamage();
+
+                    while (_isAnimating)
+                    {
+                        yield return null;
+                    }
+                }
+            }
+            finally
+            {
+                _dashing = false;
+                _actionTimer = _digInterval;
+                DashEnded?.Invoke();
+            }
+        }
+
         // ------------------------------------------------------------------
         // 충격파 (스킬)
         // ------------------------------------------------------------------
