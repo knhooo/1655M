@@ -22,7 +22,7 @@ namespace Game.Player
     /// <see cref="PlayerPrefs"/> 로 영속. 런 시작 시 <see cref="PlayerController"/> 가 읽어 캐시한다.
     ///
     /// 강화는 항목별 Lv 0 부터 시작(추가치 없음), 무한, 비용 선형(레벨당 Coin/Gold +1).
-    /// 기본값(임시): 대미지 17 · 최대 HP 500 · 치명타 확률 5% · 치명타 배수 2배.
+    /// 기본값: 대미지 17 · 최대 HP 1000 · 치명타 확률 5% · 치명타 배수 2배.
     /// </summary>
     public static class PlayerStats
     {
@@ -31,7 +31,7 @@ namespace Game.Player
 
         // ---- 기본값 ----
         public const float BaseDamage = 17f;
-        public const int BaseMaxHp = 100;   // 임시(테스트용). 원래 1000
+        public const int BaseMaxHp = 1000;
         public const float BaseCritChance = 5f;   // %
         public const float CritMultiplier = 2f;
 

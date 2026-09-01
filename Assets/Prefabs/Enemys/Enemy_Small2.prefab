@@ -141,8 +141,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.Enemy
   _size: {x: 1, y: 1}
-  _maxHp: 20
-  _contactDamage: 1
+  _maxHp: 25
+  _contactDamage: 10
   _contactInterval: 0.8
   _coinRewardMin: 1
   _coinRewardMax: 2

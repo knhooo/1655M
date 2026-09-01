@@ -1112,8 +1112,8 @@ MonoBehaviour:
   _rockHp: 3
   _oreHp: 5
   _soilContactDamage: 5
-  _rockContactDamage: 16
-  _oreContactDamage: 27
+  _rockContactDamage: 9
+  _oreContactDamage: 14
   _surfaceRows: 1
   _layers:
   - type: 1
@@ -1157,10 +1157,10 @@ MonoBehaviour:
     weight: 0.8
     minRow: 6
   - prefab: {fileID: 3738210830734614833, guid: b41d97d51c0d9aa43ba98cb5adef0c62, type: 3}
-    weight: 10
+    weight: 0.8
     minRow: 6
   - prefab: {fileID: 8785588462515285992, guid: bdee570cfdaf65640948f83cb5c56628, type: 3}
-    weight: 10
+    weight: 0.8
     minRow: 6
   _formationDensity: 0.01
   _formationTable:

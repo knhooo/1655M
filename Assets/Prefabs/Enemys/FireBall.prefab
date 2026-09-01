@@ -106,6 +106,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.Fireball
   _speed: 6
   _hitRadius: 0.45
-  _damage: 45
+  _damage: 32
   _lifetime: 5
   _spin: 240

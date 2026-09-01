@@ -60,10 +60,10 @@ namespace Game.Map
         [SerializeField] private int _rockHp = 45;
         [SerializeField] private int _oreHp = 95;
 
-        [Header("Strata 접촉 피해 (지층 = 기본 적. 인접 시 플레이어가 받는 피해)")]
+        [Header("Strata 접촉 피해 (지층 = 기본 적. 인접한 미파괴 블록마다 이동 스텝당 1회)")]
         [SerializeField] private int _soilContactDamage = 5;
-        [SerializeField] private int _rockContactDamage = 16;
-        [SerializeField] private int _oreContactDamage = 27;
+        [SerializeField] private int _rockContactDamage = 9;
+        [SerializeField] private int _oreContactDamage = 14;
 
         [Header("Strata 층 (깊이대별 단일 지층 - 임시 값)")]
         [Tooltip("맨 위 빈 지표 행 수. 이 아래부터 첫 번째 층이 시작.")]
