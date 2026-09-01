@@ -144,7 +144,21 @@ namespace Game.Map
 
         // 상태 -----------------------------------------------------------
         private readonly Dictionary<int, MapRow> _rows = new();
+        private readonly Stack<MapRow> _rowPool = new();   // 스트리밍 시 MapRow 재사용 (GC 억제)
         private ObjectPool<BlockView> _blockPool;
+
+        private MapRow RentRow()
+        {
+            return _rowPool.Count > 0 ? _rowPool.Pop() : new MapRow();
+        }
+
+        private void RecycleRow(MapRow row)
+        {
+            Array.Clear(row.Cells, 0, row.Cells.Length);
+            Array.Clear(row.Views, 0, row.Views.Length);
+            Array.Clear(row.Entities, 0, row.Entities.Length);
+            _rowPool.Push(row);
+        }
 
         // 엔티티 풀 (프리팹 단위)
         private readonly Dictionary<GridEntity, ObjectPool<GridEntity>> _entityPools = new();
@@ -238,7 +252,7 @@ namespace Game.Map
                 return;
             }
 
-            var mapRow = new MapRow();
+            MapRow mapRow = RentRow();
             _rows.Add(row, mapRow);
 
             // 보스 행이면 이 행을 통째로 보스가 채운다 (col 루프는 남은 칸을 건너뜀)
@@ -315,6 +329,7 @@ namespace Game.Map
             }
 
             _rows.Remove(row);
+            RecycleRow(mapRow);
         }
 
         // ------------------------------------------------------------------

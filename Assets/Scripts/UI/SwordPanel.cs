@@ -136,9 +136,10 @@ namespace Game.UI
             }
             if (RunInventory.Instance != null)
             {
-                foreach (SwordRarity r in RunInventory.Instance.Found) // 이번 런에서 주운 것도 보유로
+                var found = RunInventory.Instance.Found; // 이번 런에서 주운 것도 보유로
+                for (int i = 0; i < found.Count; i++) // 인터페이스 foreach 박싱 회피
                 {
-                    owned.Add((int)r);
+                    owned.Add((int)found[i]);
                 }
             }
             return owned;
