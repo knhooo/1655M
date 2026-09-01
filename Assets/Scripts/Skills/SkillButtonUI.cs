@@ -21,6 +21,10 @@ namespace Game.Skills
 
         [SerializeField] private Image _iconImage;
 
+        private float _lastFill = -1f;
+        private bool _lastReady;
+        private bool _stateInit;
+
         private void Reset()
         {
             _button = GetComponent<Button>();
@@ -79,16 +83,28 @@ namespace Game.Skills
                 return;
             }
 
+            // 값이 바뀔 때만 대입 — 매 프레임 쓰면 Canvas/Selectable 이 매 프레임 dirty 됨.
             if (_cooldownFill != null)
             {
-                // 준비 완료 = 꽉 참(1), 사용 직후 = 0 에서 점점 차오름.
-                _cooldownFill.fillAmount = skill.CooldownProgress;
+                float fill = skill.CooldownProgress;
+                if (!_stateInit || !Mathf.Approximately(fill, _lastFill))
+                {
+                    _cooldownFill.fillAmount = fill;
+                    _lastFill = fill;
+                }
             }
 
             if (_button != null)
             {
-                _button.interactable = skill.IsReady;
+                bool ready = skill.IsReady;
+                if (!_stateInit || ready != _lastReady)
+                {
+                    _button.interactable = ready;
+                    _lastReady = ready;
+                }
             }
+
+            _stateInit = true;
         }
     }
 }

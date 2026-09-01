@@ -51,6 +51,7 @@ namespace Game.Juice
             }
 
             transform.position = worldPos;
+            transform.rotation = Quaternion.identity; // 2D 고정 카메라 — 빌보드 불필요
             _text.alignment = TextAlignmentOptions.Center; // transform 위치에 정확히 중앙 정렬
             _text.text = label;
             _text.color = color;
@@ -71,12 +72,6 @@ namespace Game.Juice
         private void Update()
         {
             _life += Time.deltaTime;
-
-            // 항상 카메라를 향하게 (거울 반전 방지)
-            if (_cam != null)
-            {
-                transform.rotation = _cam.transform.rotation;
-            }
 
             if (_motion == Motion.RiseFade)
             {

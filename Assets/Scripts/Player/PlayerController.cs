@@ -39,8 +39,10 @@ namespace Game.Player
         [SerializeField] private float _stepInterval = 0.04f;
 
         [Header("Debug")]
-        [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그).")]
+#if UNITY_EDITOR
+        [Tooltip("좌상단에 상태 표시 (col/row/hp/플래그). 에디터 전용.")]
         [SerializeField] private bool _showDebugHud = false;
+#endif
         [Tooltip("무적 치트. 메뉴 '1655M/Debug: Player Invincible' 로도 토글 (재시작해도 유지).")]
         [SerializeField] private bool _godMode = false;
 
@@ -581,6 +583,7 @@ namespace Game.Player
             HpChanged?.Invoke(_hp);
         }
 
+#if UNITY_EDITOR
         private void OnGUI()
         {
             if (!_showDebugHud)
@@ -595,7 +598,6 @@ namespace Game.Player
             GUI.Label(new Rect(10, 10, 400, 90), s);
         }
 
-#if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
             if (_map == null)
