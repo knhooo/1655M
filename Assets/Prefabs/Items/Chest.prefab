@@ -114,8 +114,8 @@ MonoBehaviour:
     weight: 35
   - kind: 0
     currency: 1
-    amount: {x: 2, y: 6}
-    weight: 20
+    amount: {x: 3, y: 7}
+    weight: 26
   - kind: 0
     currency: 2
     amount: {x: 1, y: 3}

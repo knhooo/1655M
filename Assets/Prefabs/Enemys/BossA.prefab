@@ -222,7 +222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.Boss
   _size: {x: 9, y: 9}
-  _maxHp: 1400
+  _maxHp: 1700
   _contactDamage: 12
   _contactInterval: 1
   _attackInterval: 3
