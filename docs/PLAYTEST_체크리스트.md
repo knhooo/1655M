@@ -2,6 +2,8 @@
 
 **치트 OFF** 상태로. (`1655M/Debug: Player Invincible` 해제, `Debug: All Swords Unlocked` 해제)
 
+> ⚠️ **제출 전 복구:** `PlayerStats.BaseMaxHp` 는 현재 테스트용 `100`. 최종 빌드 전 `1000` 으로 되돌릴 것.
+
 ## 코어 루프 (필수 통과)
 
 - [ ] 타이틀 → Ready 버튼 → 인벤토리 슬라이드다운

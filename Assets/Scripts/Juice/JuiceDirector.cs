@@ -37,6 +37,11 @@ namespace Game.Juice
         [SerializeField] private float _shockShakeAmp = 0.08f;
         [SerializeField] private float _shockShakeDur = 0.18f;
 
+        [Header("플레이어 사망")]
+        [SerializeField] private float _deathHitStop = 0.14f;
+        [SerializeField] private float _deathShakeAmp = 0.22f;
+        [SerializeField] private float _deathShakeDur = 0.5f;
+
         private void Reset()
         {
             _camera = FindFirstObjectByType<CameraFollow>();
@@ -59,6 +64,7 @@ namespace Game.Juice
             {
                 PlayerController.Instance.DamageTaken += OnPlayerDamaged;
                 PlayerController.Instance.ShockwaveFired += OnShockwave;
+                PlayerController.Instance.Died += OnPlayerDied;
             }
             if (_map != null)
             {
@@ -72,6 +78,7 @@ namespace Game.Juice
             {
                 PlayerController.Instance.DamageTaken -= OnPlayerDamaged;
                 PlayerController.Instance.ShockwaveFired -= OnShockwave;
+                PlayerController.Instance.Died -= OnPlayerDied;
             }
             if (_map != null)
             {
@@ -102,6 +109,12 @@ namespace Game.Juice
         {
             HitStop.Do(_shockHitStop);
             Shake(_shockShakeAmp, _shockShakeDur);
+        }
+
+        private void OnPlayerDied()
+        {
+            HitStop.Do(_deathHitStop);
+            Shake(_deathShakeAmp, _deathShakeDur);
         }
 
         private void Shake(float amp, float dur)

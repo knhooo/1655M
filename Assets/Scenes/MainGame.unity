@@ -2623,6 +2623,9 @@ MonoBehaviour:
   _shockHitStop: 0.05
   _shockShakeAmp: 0.08
   _shockShakeDur: 0.18
+  _deathHitStop: 0.14
+  _deathShakeAmp: 0.22
+  _deathShakeDur: 0.5
 --- !u!4 &539427725
 Transform:
   m_ObjectHideFlags: 0
@@ -9463,8 +9466,6 @@ GameObject:
   - component: {fileID: 1477222403}
   - component: {fileID: 1477222402}
   - component: {fileID: 1477222407}
-  - component: {fileID: 1477222408}
-  - component: {fileID: 1477222409}
   m_Layer: 0
   m_Name: Skills
   m_TagString: Untagged
@@ -9565,40 +9566,6 @@ MonoBehaviour:
   _levelsPerRadius: 2
   _baseDamageMultiplier: 1.5
   _damageMultiplierPerLevel: 0.1
---- !u!114 &1477222408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1477222400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d4bbb39192ceb8a48ab3b9b4bc8b0486, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.SkillCastVisual
-  _system: {fileID: 1477222404}
-  _renderer: {fileID: 973864037}
-  _duration: 0.25
-  _startScale: 0.5
-  _endScale: 1.4
-  _fade: 1
---- !u!114 &1477222409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1477222400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e010047c7cff33447a51ce3f2ee948fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.ShieldVisual
-  _ring: {fileID: 1273017920}
-  _spin: 60
-  _pulseAmp: 0.06
-  _pulseHz: 2
 --- !u!1 &1479948352
 GameObject:
   m_ObjectHideFlags: 0
@@ -10122,7 +10089,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1122130413}
   m_HandleRect: {fileID: 1122130412}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -10883,6 +10850,7 @@ GameObject:
   - component: {fileID: 1748223059}
   - component: {fileID: 1748223057}
   - component: {fileID: 1748223060}
+  - component: {fileID: 1748223061}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -10957,6 +10925,43 @@ MonoBehaviour:
   _effectForwardOffset: -30
   _effectRadius: 0
   _effectFade: 1
+--- !u!114 &1748223061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748223056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c163ced6e248c38d25d5cbb5f92fc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerAnimation
+  _body: {fileID: 478051413}
+  _hurtFlashEnabled: 1
+  _hurtFlashColor: {r: 1, g: 0.4, b: 0.4, a: 1}
+  _hurtFlashTime: 0.12
+  _deathBurstPrefab: {fileID: 8307217342670492364, guid: 705f93ae2bc332c44834ecb2ed7e4a76, type: 3}
+  _deathBurst: {fileID: 1037615191473109558, guid: 705f93ae2bc332c44834ecb2ed7e4a76, type: 3}
+  _deathBurstLifetime: 2
+  _hideOnDeath:
+  - {fileID: 189760283}
+  _deathHold: 1.5
+  _deathDuration: 1
+  _deathFlashTime: 0.06
+  _deathPopUp: 0.6
+  _deathSpin: 540
+  _deathEndScale: 0.1
+  _shieldRing: {fileID: 1273017920}
+  _shieldSpin: 60
+  _shieldPulseAmp: 0.06
+  _shieldPulseHz: 2
+  _skillSystem: {fileID: 1477222404}
+  _castRenderer: {fileID: 973864037}
+  _castDuration: 0.25
+  _castStartScale: 0.5
+  _castEndScale: 1.4
+  _castFade: 1
 --- !u!1 &1787063158
 GameObject:
   m_ObjectHideFlags: 0

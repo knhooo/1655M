@@ -210,6 +210,15 @@ namespace Game.Flow
                 _map.SetStreamingEnabled(false);
             }
 
+            // 사망 연출(스캐터 + 파티클)이 끝날 때까지 카메라 되감기를 미룬다. 안전상 최대 3초.
+            PlayerAnimation deathAnim = Player != null ? Player.GetComponentInChildren<PlayerAnimation>() : null;
+            float animGuard = 0f;
+            while (deathAnim != null && deathAnim.DeathSequenceActive && animGuard < 3f)
+            {
+                animGuard += Time.deltaTime;
+                yield return null;
+            }
+
             if (_camera != null)
             {
                 bool arrived = false;
