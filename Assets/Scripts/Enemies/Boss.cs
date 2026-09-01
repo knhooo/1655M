@@ -117,6 +117,7 @@ namespace Game.Enemies
             {
                 _engaged = true;                             // 첫 피격 → 공격 개시
                 _attackCd = Mathf.Max(0.1f, _attackWindup);  // 첫 공격까지 잠깐 여유
+                SfxPlayer.Play(SfxId.BossPhase);             // 각성 — 페이즈 전환음 재사용
             }
 
             if (Phase == 1 && _hp > 0 && _hp * 2 <= MaxHp)

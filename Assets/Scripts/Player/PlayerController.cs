@@ -471,64 +471,78 @@ namespace Game.Player
         }
 
         /// <summary>
-        /// 단위 방향열(<paramref name="steps"/>)을 따라 연속 돌진. (아이템: ㄹ자 대시)
-        /// 각 칸의 지층·엔티티를 <paramref name="damageMultiplier"/> 배로 타격하고, 못 뚫으면 그 지점에서 정지.
-        /// dir 은 (±1,0)·(0,+1) 단위로 해석. 위(-y)와 범위 밖 열은 건너뛴다.
+        /// 좌우로 <b>벽(맵 끝 / 한 방에 못 뚫는 지층)에 막힐 때까지</b> 돌진 → 한 줄 내려가기 →
+        /// 반대 방향, 을 <paramref name="passes"/> 회 반복한다. (아이템: ㄹ자 대시)
+        /// 지나는 칸의 지층·엔티티를 <paramref name="damageMultiplier"/> 배로 타격.
         /// </summary>
-        public bool StartPathDash(Vector2Int[] steps, float damageMultiplier, float stepDuration)
+        public bool StartSerpentineDash(int passes, int dropPerPass, float damageMultiplier, float stepDuration)
         {
-            if (steps == null || steps.Length == 0 || !CanDash())
+            // 아이템은 이동 중(_isAnimating)에 줍는 게 정상이라, 최소 조건만 보고 코루틴이 스텝 종료를 기다린다.
+            if (passes < 1 || !IsAlive || _dashing || _levitating || !_controlEnabled || _map == null)
             {
                 return false;
             }
-            StartCoroutine(PathDashRoutine(steps, Mathf.Max(0.1f, damageMultiplier), Mathf.Max(0.01f, stepDuration)));
+            StartCoroutine(SerpentineDashRoutine(passes, Mathf.Max(1, dropPerPass),
+                Mathf.Max(0.1f, damageMultiplier), Mathf.Max(0.01f, stepDuration)));
             return true;
         }
 
-        private IEnumerator PathDashRoutine(Vector2Int[] steps, float damageMultiplier, float stepDuration)
+        private IEnumerator SerpentineDashRoutine(int passes, int dropPerPass, float dmgMul, float stepDuration)
         {
+            // 진행 중이던 이동/채굴 스텝이 끝나길 대기 (최대 0.5s 안전장치)
+            float wait = 0f;
+            while (_isAnimating && wait < 0.5f)
+            {
+                wait += Time.deltaTime;
+                yield return null;
+            }
+            if (!IsAlive || _dashing || _levitating)
+            {
+                yield break;
+            }
+
             _dashing = true;
+            _isAnimating = false;
             DashStarted?.Invoke();
             try
             {
-                for (int i = 0; i < steps.Length; i++)
+                // 더 넓게 트인 쪽으로 시작
+                int dir = _col <= (MapGenerator.Columns - 1) * 0.5f ? 1 : -1;
+
+                for (int pass = 0; pass < passes; pass++)
                 {
-                    if (!IsAlive)
+                    // --- 가로: 벽에 막힐 때까지 ---
+                    int guard = 0;
+                    while (guard++ < MapGenerator.Columns + 2)
                     {
-                        yield break;
+                        if (!IsAlive) yield break;
+
+                        int tc = _col + dir;
+                        if (tc < 0 || tc >= MapGenerator.Columns) break; // 맵 끝 = 벽
+
+                        if (!TryDashStep(tc, _row, dmgMul, stepDuration)) break; // 못 뚫음 = 벽
+                        while (_isAnimating) yield return null;
                     }
 
-                    Vector2Int d = steps[i];
-                    int tc = _col + (d.x > 0 ? 1 : (d.x < 0 ? -1 : 0));
-                    int tr = _row + (d.y > 0 ? 1 : 0);   // 위로는 못 감
+                    if (pass >= passes - 1) break;
 
-                    if (tc < 0 || tc >= MapGenerator.Columns || (tc == _col && tr == _row))
+                    // --- 세로: dropPerPass 줄 내려가기 ---
+                    bool blockedDown = false;
+                    for (int k = 0; k < dropPerPass; k++)
                     {
-                        continue;
-                    }
+                        if (!IsAlive) yield break;
 
-                    if (_map.IsSolid(tc, tr))
-                    {
-                        int hit = Mathf.RoundToInt(RollHit(out bool crit) * damageMultiplier);
-                        _map.DamageCell(tc, tr, hit, crit);
+                        int tr = _row + 1;
+                        if (!_map.IsRowReady(tr) || !TryDashStep(_col, tr, dmgMul, stepDuration))
+                        {
+                            blockedDown = true;
+                            break;
+                        }
+                        while (_isAnimating) yield return null;
                     }
-                    DashAffectedCell?.Invoke(tc, tr);
+                    if (blockedDown) break;
 
-                    if (!_map.IsRowReady(tr) || _map.IsSolid(tc, tr))
-                    {
-                        yield break; // 못 뚫음 → 정지
-                    }
-
-                    _col = tc;
-                    _row = tr;
-                    BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
-                    CellChanged?.Invoke(_col, _row);
-                    CheckContactDamage();
-
-                    while (_isAnimating)
-                    {
-                        yield return null;
-                    }
+                    dir = -dir; // 방향 전환
                 }
             }
             finally
@@ -537,6 +551,29 @@ namespace Game.Player
                 _actionTimer = _digInterval;
                 DashEnded?.Invoke();
             }
+        }
+
+        /// <summary>돌진 한 칸: 타격 → 뚫렸으면 이동하고 true, 못 뚫으면 false.</summary>
+        private bool TryDashStep(int tc, int tr, float dmgMul, float stepDuration)
+        {
+            if (_map.IsSolid(tc, tr))
+            {
+                int hit = Mathf.RoundToInt(RollHit(out bool crit) * dmgMul);
+                _map.DamageCell(tc, tr, hit, crit);
+            }
+            DashAffectedCell?.Invoke(tc, tr);
+
+            if (_map.IsSolid(tc, tr))
+            {
+                return false; // 한 방에 못 뚫음
+            }
+
+            _col = tc;
+            _row = tr;
+            BeginAnimation(_map.CellToWorld(_col, _row), stepDuration);
+            CellChanged?.Invoke(_col, _row);
+            CheckContactDamage();
+            return true;
         }
 
         // ------------------------------------------------------------------

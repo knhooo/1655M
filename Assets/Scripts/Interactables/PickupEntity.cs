@@ -19,8 +19,11 @@ namespace Game.Interactables
         [SerializeField] private GameObject _pickupVfx;
         [SerializeField] private float _pickupVfxLifetime = 1.5f;
 
-        /// <summary>획득됨: 표시용 라벨(예 "HP +200").</summary>
+        /// <summary>이 아이템이 획득됨: 표시용 라벨(예 "HP +200").</summary>
         public event Action<string> Collected;
+
+        /// <summary>아무 아이템이나 획득되면: 표시용 라벨. 상단 토스트 UI 등이 구독.</summary>
+        public static event Action<string> Picked;
 
         private bool _collected;
 
@@ -74,6 +77,7 @@ namespace Game.Interactables
                 Destroy(g, Mathf.Max(0.1f, _pickupVfxLifetime));
             }
             Collected?.Invoke(label);
+            Picked?.Invoke(label);
             Map.ClearEntity(this);
         }
 

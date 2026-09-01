@@ -29,6 +29,8 @@ namespace Game.Enemies
         [SerializeField] private float _fireballCeiling = 6f;
         [Tooltip("대각선 각도 (도). 45 = 정확히 45도 위.")]
         [SerializeField, Range(15f, 80f)] private float _fireballAngle = 55f;
+        [Tooltip("페이즈 2에서만: 벽에 튕길 때마다 반사각을 ±이 각도(도) 만큼 랜덤하게 흔든다. 0 = 정확 반사.")]
+        [SerializeField, Range(0f, 45f)] private float _phase2BounceJitter = 18f;
 
         [Header("Boss 2 — Tornado")]
         [Tooltip("선택. 각 토네이도 라인에 띄울 연출 오브젝트. 없어도 됨(경고 마커로 대체).")]
@@ -130,21 +132,24 @@ namespace Game.Enemies
             Vector2 right = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang));
             Vector2 left = new Vector2(-right.x, right.y);
 
+            // 페이즈 2에서만 벽 반사각 랜덤화
+            float jitter = Phase >= 2 ? _phase2BounceJitter : 0f;
+
             if (Phase >= 2)
             {
-                Spawn(head, left, minX, maxX, minY, maxY);
-                Spawn(head, right, minX, maxX, minY, maxY);
+                Spawn(head, left, minX, maxX, minY, maxY, jitter);
+                Spawn(head, right, minX, maxX, minY, maxY, jitter);
             }
             else
             {
-                Spawn(head, _fireballRight ? right : left, minX, maxX, minY, maxY);
+                Spawn(head, _fireballRight ? right : left, minX, maxX, minY, maxY, jitter);
                 _fireballRight = !_fireballRight;
             }
         }
 
-        private void Spawn(Vector3 pos, Vector2 dir, float minX, float maxX, float minY, float maxY)
+        private void Spawn(Vector3 pos, Vector2 dir, float minX, float maxX, float minY, float maxY, float bounceJitter)
         {
-            Instantiate(_fireballPrefab).Launch(pos, dir, minX, maxX, minY, maxY);
+            Instantiate(_fireballPrefab).Launch(pos, dir, minX, maxX, minY, maxY, bounceJitter);
         }
 
         // ------------------------------------------------------------------
