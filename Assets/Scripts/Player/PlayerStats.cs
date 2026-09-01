@@ -3,6 +3,7 @@ using UnityEngine;
 using Game.Equipment;
 using Game.Economy;
 using Game.Flow;
+using Game.Audio;
 
 namespace Game.Player
 {
@@ -96,6 +97,7 @@ namespace Game.Player
             }
             PlayerPrefs.SetInt(LevelKey(k), GetLevel(k) + 1);
             PlayerPrefs.Save();
+            SfxPlayer.Play(SfxId.Upgrade);
             Changed?.Invoke();
             return true;
         }
@@ -169,6 +171,7 @@ namespace Game.Player
             }
             PlayerPrefs.SetInt(EquippedSwordKey, (int)rarity);
             PlayerPrefs.Save();
+            SfxPlayer.Play(SfxId.UiClick);
             Changed?.Invoke();
         }
 

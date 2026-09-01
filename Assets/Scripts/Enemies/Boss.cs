@@ -5,6 +5,7 @@ using UnityEngine;
 using Game.Map;
 using Game.Player;
 using Game.Economy;
+using Game.Audio;
 
 namespace Game.Enemies
 {
@@ -107,12 +108,14 @@ namespace Game.Enemies
             if (Phase == 1 && _hp > 0 && _hp * 2 <= MaxHp)
             {
                 Phase = 2;
+                SfxPlayer.Play(SfxId.BossPhase);
                 PhaseChanged?.Invoke(2);
             }
 
             if (_hp <= 0)
             {
                 RunWallet.Instance?.Add(CurrencyType.Coin, _coinReward);
+                SfxPlayer.Play(SfxId.BossDeath);
                 Killed?.Invoke(AnchorCol, AnchorRow, _coinReward);
                 Map.ClearEntity(this);
                 // TODO: 클리어 연출 / 하강 재개는 GameManager 측에서 Killed 구독
@@ -157,8 +160,7 @@ namespace Game.Enemies
             }
         }
 
-        /// <summary>다음 공격 선택. 기본은 번갈아. 보스 B 는 오버라이드로 순서/비중 변경.</summary>
-        /// <summary>다음 공격 ID. 기본은 세로/가로 직선 번갈아. Boss2 는 오버라이드.</summary>
+        /// <summary>다음 공격 ID. 기본은 세로/가로 직선 번갈아. Boss2 는 오버라이드로 순서/비중 변경.</summary>
         protected virtual int ChooseAttack()
         {
             return (_attackIndex++ % 2 == 0) ? AttackColumnStrike : AttackRowStrike;
@@ -177,6 +179,8 @@ namespace Game.Enemies
 
             if (_hp > 0)
             {
+                // 강타 사운드는 BossAttackVisual 이 충격파 칸마다 BossShockwave 로 낸다.
+                // 파이어볼/토네이도 등 서브클래스 고유음은 OnAttackStrike 안에서.
                 AttackStrike?.Invoke(_cells);
                 OnAttackStrike(attackId, _cells);
             }

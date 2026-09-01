@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Game.Map;
+using Game.Audio;
 
 namespace Game.Enemies
 {
@@ -194,6 +195,8 @@ namespace Game.Enemies
             StopAll();
             ClearMarkers();
 
+            SfxPlayer.Play(SfxId.BossTelegraph);
+
             float s = Mathf.Max(0.05f, _markerScale) * _map.CellSize;
             for (int i = 0; i < cells.Count; i++)
             {
@@ -283,7 +286,8 @@ namespace Game.Enemies
             }
             else
             {
-                // 폴백: 마커 흰색 플래시
+                // 폴백: 원형 충격파 프리팹이 없을 때 — 마커 흰색 플래시 + 강타음 1회
+                SfxPlayer.Play(SfxId.BossShockwave);
                 float t = 0f;
                 float dur = Mathf.Max(0.02f, _strikeFlash);
                 while (t < 1f)
@@ -303,6 +307,7 @@ namespace Game.Enemies
             SpriteRenderer s = _shockPool.Get();
             s.transform.position = pos;
             s.sortingOrder = _sortingOrder + 1;
+            SfxPlayer.PlayAt(SfxId.BossShockwave, pos);
             StartCoroutine(ShockAnim(s));
         }
 

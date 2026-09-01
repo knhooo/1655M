@@ -3,6 +3,7 @@ using UnityEngine;
 using Game.Map;
 using Game.Player;
 using Game.Economy;
+using Game.Audio;
 
 namespace Game.Enemies
 {
@@ -88,6 +89,7 @@ namespace Game.Enemies
             {
                 int coin = UnityEngine.Random.Range(_coinRewardMin, Mathf.Max(_coinRewardMin, _coinRewardMax) + 1);
                 RunWallet.Instance?.Add(CurrencyType.Coin, coin);
+                SfxPlayer.PlayAt(SfxId.EnemyDeath, transform.position);
                 Killed?.Invoke(AnchorCol, AnchorRow, coin);
 
                 MapGenerator board = Map;

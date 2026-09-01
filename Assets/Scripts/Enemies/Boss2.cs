@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Game.Map;
 using Game.Player;
+using Game.Audio;
 
 namespace Game.Enemies
 {
@@ -114,6 +115,8 @@ namespace Game.Enemies
                 return;
             }
 
+            SfxPlayer.Play(SfxId.BossFireball);
+
             float half = Map.CellSize * 0.5f;
             int hr = AnchorRow;
             float minX = Map.CellToWorld(0, hr).x - half;
@@ -170,6 +173,11 @@ namespace Game.Enemies
         private void DoTornado()
         {
             PlayerController pc = Map != null ? Map.Player : null;
+
+            if (_tornadoCols.Count > 0)
+            {
+                SfxPlayer.Play(SfxId.BossTornado);
+            }
 
             foreach (int c in _tornadoCols)
             {

@@ -3,6 +3,7 @@ using UnityEngine;
 using Game.Map;
 using Game.Economy;
 using Game.Equipment;
+using Game.Audio;
 
 namespace Game.Interactables
 {
@@ -103,12 +104,14 @@ namespace Game.Interactables
                 SwordRarity rarity = PickSword();
                 RunInventory.Instance?.AddFound(rarity);
                 label = $"{rarity.DisplayName()} 검";
+                SfxPlayer.PlayAt(SfxId.SwordGet, transform.position);
             }
             else
             {
                 int give = Roll(d.amount);
                 RunWallet.Instance?.Add(d.currency, give);
                 label = $"{d.currency.DisplayName()} +{give}";
+                SfxPlayer.PlayAt(SfxId.ChestOpen, transform.position);
             }
 
             Opened?.Invoke(label);
