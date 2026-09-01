@@ -20,7 +20,10 @@ namespace Game.Interactables
 
         protected override string OnCollected(PlayerController pc)
         {
-            pc.StartSerpentineDash(_passes, _dropPerPass, _damageMultiplier, _stepDuration);
+            // 왕복 횟수·관통 피해는 아웃게임 강화(UpgradeKind.ItemDash)로 증가
+            int passes = PlayerStats.DashItemPasses(_passes);
+            float dmgMul = PlayerStats.DashItemDamageMul(_damageMultiplier);
+            pc.StartSerpentineDash(passes, _dropPerPass, dmgMul, _stepDuration);
             return "ㄹ DASH!";
         }
     }

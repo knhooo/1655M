@@ -37,6 +37,8 @@ namespace Game.UI
         [SerializeField] private TMP_Text _nameText;    // "Damage"
         [SerializeField] private TMP_Text _levelText;   // "Lv.3"
         [SerializeField] private TMP_Text _costText;    // "Coin 4 / Gold 4"
+        [Tooltip("선택. 레벨당 효과 설명 표시. (아이템 탭에서 유용)")]
+        [SerializeField] private TMP_Text _effectText;
         [SerializeField] private Button _upgradeButton;
 
         [Header("현재 스탯 요약 (하단, 상시 표시)")]
@@ -125,6 +127,7 @@ namespace Game.UI
             if (_nameText != null) _nameText.text = PlayerStats.DisplayName(_selected);
             if (_levelText != null) _levelText.text = $"Lv.{PlayerStats.GetLevel(_selected)}";
             if (_costText != null) _costText.text = BuildCostText(cost);
+            if (_effectText != null) _effectText.text = PlayerStats.EffectDescription(_selected);
             if (_upgradeButton != null) _upgradeButton.interactable = PlayerStats.CanAfford(cost);
         }
 

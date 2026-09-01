@@ -15,6 +15,8 @@ namespace Game.Player
         Skill1 = 2,
         Skill2 = 3,
         Skill3 = 4,
+        ItemHeal = 5,  // 체력 회복 아이템 효과량
+        ItemDash = 6,  // ㄹ자 대시 아이템 위력
     }
 
     /// <summary>
@@ -37,6 +39,11 @@ namespace Game.Player
 
         public const float DamagePerLevel = 2f;
         public const int HpPerLevel = 25;
+
+        // 아이템 강화 (레벨당 효과 증가치)
+        public const int HealItemPerLevel = 60;      // 체력 회복 +60/레벨
+        public const int DashItemLevelsPerPass = 2;  // 2레벨마다 대시 왕복 +1
+        public const float DashItemDamagePerLevel = 0.35f; // 대시 관통 피해 배수 +0.35/레벨
 
         private const string EquippedSwordKey = "equipped_sword"; // -1 = 없음/자동
 
@@ -67,6 +74,9 @@ namespace Game.Player
                     return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Rune2, n));
                 case UpgradeKind.Skill3:
                     return new CurrencyCost((CurrencyType.Coin, n), (CurrencyType.Rune3, n));
+                case UpgradeKind.ItemHeal:
+                case UpgradeKind.ItemDash:
+                    return new CurrencyCost((CurrencyType.Coin, n * 2), (CurrencyType.Gold, n));
                 default:
                     return new CurrencyCost((CurrencyType.Coin, n));
             }
@@ -111,7 +121,26 @@ namespace Game.Player
                 case UpgradeKind.Skill1: return "Skill 1";
                 case UpgradeKind.Skill2: return "Skill 2";
                 case UpgradeKind.Skill3: return "Skill 3";
+                case UpgradeKind.ItemHeal: return "Heal Item";
+                case UpgradeKind.ItemDash: return "Dash Item";
                 default: return k.ToString();
+            }
+        }
+
+        /// <summary>강화 항목의 레벨당 효과 설명 (팝업 표시용).</summary>
+        public static string EffectDescription(UpgradeKind k)
+        {
+            switch (k)
+            {
+                case UpgradeKind.Damage: return $"레벨당 대미지 +{DamagePerLevel:0}";
+                case UpgradeKind.Armor: return $"레벨당 최대 HP +{HpPerLevel}";
+                case UpgradeKind.Skill1:
+                case UpgradeKind.Skill2:
+                case UpgradeKind.Skill3: return "레벨당 해당 스킬 위력·지속 증가";
+                case UpgradeKind.ItemHeal: return $"레벨당 회복량 +{HealItemPerLevel}";
+                case UpgradeKind.ItemDash:
+                    return $"{DashItemLevelsPerPass}레벨마다 왕복 +1 · 레벨당 관통 피해 +{DashItemDamagePerLevel:0.00}배";
+                default: return string.Empty;
             }
         }
 
@@ -126,6 +155,20 @@ namespace Game.Player
                 default: return 0;
             }
         }
+
+        // ---- 아이템 강화 결과 (베이스는 아이템 프리팹이 넘겨줌) ----
+
+        /// <summary>체력 회복 아이템 총 회복량 = 베이스 + 강화.</summary>
+        public static int HealItemAmount(int baseAmount) =>
+            Mathf.Max(0, baseAmount) + GetLevel(UpgradeKind.ItemHeal) * HealItemPerLevel;
+
+        /// <summary>ㄹ자 대시 왕복 횟수 = 베이스 + 강화(DashItemLevelsPerPass 레벨마다 +1).</summary>
+        public static int DashItemPasses(int basePasses) =>
+            Mathf.Max(1, basePasses) + GetLevel(UpgradeKind.ItemDash) / Mathf.Max(1, DashItemLevelsPerPass);
+
+        /// <summary>ㄹ자 대시 관통 피해 배수 = 베이스 + 강화.</summary>
+        public static float DashItemDamageMul(float baseMul) =>
+            baseMul + GetLevel(UpgradeKind.ItemDash) * DashItemDamagePerLevel;
 
         // ------------------------------------------------------------------
         // 계산된 스탯
