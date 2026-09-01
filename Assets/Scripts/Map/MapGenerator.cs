@@ -642,7 +642,6 @@ namespace Game.Map
                 return;
             }
             SpawnEntity(prefab, prefab.Size, 0, row, mapRow); // 앵커 col 0, Size(9,9) 가정
-            Debug.Log($"[MapGenerator] 보스 등장 @ row {row}", this);
         }
 
         private FormationSpawn PickFormation(int row, float t)

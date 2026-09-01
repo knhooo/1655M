@@ -115,7 +115,6 @@ namespace Game.Interactables
             }
 
             Opened?.Invoke(label);
-            Debug.Log($"[Chest] {label}", this);
             // TODO: 드롭 파티클 / 사운드
         }
 

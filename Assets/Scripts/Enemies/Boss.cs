@@ -197,7 +197,6 @@ namespace Game.Enemies
         private IEnumerator AttackRoutine(int attackId, PlayerController pc)
         {
             _attacking = true;
-            Debug.Log($"[Boss] attack id={attackId} phase={Phase}", this);
 
             _cells.Clear();
             BuildAttackCells(attackId, pc.Column, pc.Row, _cells);

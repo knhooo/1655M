@@ -61,8 +61,6 @@ namespace Game.Flow
             {
                 _rewardDisplay.Refresh();
             }
-
-            Debug.Log($"[ResultScreen] Show d={depth} best={bestDepth} newBest={newBest}", this);
         }
 
         public void Hide() => SetVisible(false);

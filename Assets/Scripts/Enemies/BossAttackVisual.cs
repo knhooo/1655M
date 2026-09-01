@@ -165,7 +165,6 @@ namespace Game.Enemies
             _boss.AttackTelegraph += OnTelegraph;
             _boss.AttackStrike += OnStrike;
             _boss.Killed += OnKilled;
-            Debug.Log($"[BossAttackVisual] 보스 연결됨: {boss.GetType().Name}", this);
         }
 
         private void Unbind()
@@ -186,7 +185,6 @@ namespace Game.Enemies
 
         private void OnTelegraph(IReadOnlyList<Vector2Int> cells, float duration)
         {
-            Debug.Log($"[BossAttackVisual] OnTelegraph cells={cells.Count} prefab={( _markerPrefab != null)} map={(_map != null)}", this);
             if (_markerPrefab == null || _map == null)
             {
                 return;

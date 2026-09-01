@@ -62,7 +62,9 @@ namespace Game.Map
         {
             Col = col;
             Row = row;
-            name = $"Block_{col}_{row}";
+#if UNITY_EDITOR
+            name = $"Block_{col}_{row}"; // 하이라키 디버깅용 — 빌드에선 이름 갱신 비용 제거
+#endif
 
             _tossing = false;
             _tossDone = null;

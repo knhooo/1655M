@@ -71,7 +71,6 @@ namespace Game.Interactables
             int give = UnityEngine.Random.Range(_minAmount, Mathf.Max(_minAmount, _maxAmount) + 1);
             RunWallet.Instance?.Add(_currency, give);
             Collected?.Invoke(_currency, give);
-            Debug.Log($"[CurrencyNode] {_currency.DisplayName()} +{give}", this);
 
             Map.ClearEntity(this);
             // TODO: 드롭 파티클 / 사운드

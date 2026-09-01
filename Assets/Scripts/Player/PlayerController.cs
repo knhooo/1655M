@@ -636,7 +636,6 @@ namespace Game.Player
 
             if (_hp == 0)
             {
-                Debug.Log($"[Player] 사망 - depth {_row}", this);
                 Died?.Invoke();
                 // TODO: 사망 연출 → 결과 화면
             }

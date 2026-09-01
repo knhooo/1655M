@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Game.Player;
 using Game.Equipment;
+using Game.Audio;
 
 namespace Game.UI
 {
@@ -59,6 +60,8 @@ namespace Game.UI
                 view.Clicked += Select;
                 _spawned.Add(view);
             }
+
+            UiClickSound.Rescan(); // 새로 만든 슬롯 버튼에도 클릭음 연결
         }
 
         private Sprite SpriteFor(SwordRarity rarity)
