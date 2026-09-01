@@ -24,7 +24,12 @@ namespace Game.UI
         {
             public Button button;
             public UpgradeKind kind;
+            [Tooltip("버튼 아래 상시 표시할 레벨 텍스트. 선택.")]
+            public TMP_Text levelLabel;
         }
+
+        [Tooltip("상시 레벨 텍스트 형식. {0} = 레벨 숫자.")]
+        [SerializeField] private string _levelLabelFormat = "Lv.{0}";
 
         [Header("항목 선택 버튼 (StatusPage 상시 표시)")]
         [SerializeField] private Selector[] _selectors;
@@ -121,6 +126,18 @@ namespace Game.UI
             if (_damageText != null) _damageText.text = $"Damage {PlayerStats.Damage}";
             if (_hpText != null) _hpText.text = $"HP {PlayerStats.MaxHp}";
             if (_swordDamageText != null) _swordDamageText.text = $"Sword Damage {PlayerStats.CritChance:0}%";
+
+            // 각 선택 버튼 아래 상시 레벨 표시 (팝업 안 열어도 보임)
+            if (_selectors != null)
+            {
+                foreach (Selector s in _selectors)
+                {
+                    if (s != null && s.levelLabel != null)
+                    {
+                        s.levelLabel.text = string.Format(_levelLabelFormat, PlayerStats.GetLevel(s.kind));
+                    }
+                }
+            }
 
             // 팝업 상세
             CurrencyCost cost = PlayerStats.GetCost(_selected);
