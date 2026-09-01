@@ -48,6 +48,9 @@ namespace Game.Enemies
         [Tooltip("ColumnStrike 세로 길이(칸). 보스 머리 위에서부터 위로.")]
         [SerializeField, Min(1)] private int _columnLength = 9;
 
+        [Tooltip("사망 후 격자에서 회수될 때까지 지연(초). die 애니메이션이 재생될 시간.")]
+        [SerializeField, Min(0f)] private float _deathAnimHold = 1.1f;
+
         [Header("페이즈 2 (HP 절반 이하) — 난이도 상승")]
         [Tooltip("공격 간격 배수. 0.78 = 약 22% 더 자주 공격 (기믹 사이 텀 확보).")]
         [SerializeField, Range(0.2f, 1f)] private float _phase2AttackIntervalMult = 0.78f;
@@ -128,11 +131,24 @@ namespace Game.Enemies
                 RunWallet.Instance?.Add(CurrencyType.Coin, _coinReward);
                 SfxPlayer.Play(SfxId.BossDeath);
                 Killed?.Invoke(AnchorCol, AnchorRow, _coinReward);
-                Map.ClearEntity(this);
-                // TODO: 클리어 연출 / 하강 재개는 GameManager 측에서 Killed 구독
+                // 격자 회수는 die 애니메이션이 재생될 시간을 두고 지연. 그 사이 공격·접촉은
+                // Update 가 _hp<=0 으로 이미 막고, 추가 피격은 ApplyDamage 진입부에서 무시된다.
+                StartCoroutine(DeathThenClear());
                 return true;
             }
             return false;
+        }
+
+        private IEnumerator DeathThenClear()
+        {
+            if (_deathAnimHold > 0f)
+            {
+                yield return new WaitForSeconds(_deathAnimHold);
+            }
+            if (Map != null)
+            {
+                Map.ClearEntity(this);
+            }
         }
 
         private void Update()
