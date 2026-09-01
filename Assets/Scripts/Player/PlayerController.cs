@@ -587,9 +587,9 @@ namespace Game.Player
         /// </summary>
         public void Levitate(float peakHeight, float duration, int damage, Vector3 source)
         {
-            if (!IsAlive || _levitating)
+            if (!IsAlive || _levitating || _dashing)
             {
-                return;
+                return; // 돌진 중엔 상태 충돌 → 이번 토네이도는 흘림
             }
             if (damage > 0)
             {

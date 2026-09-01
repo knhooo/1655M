@@ -344,7 +344,10 @@ namespace Game.Map
                 if (_pendingEntityCells.TryGetValue(key, out GridEntity pending))
                 {
                     _pendingEntityCells.Remove(key);
-                    mapRow.Entities[col] = pending;
+                    if (mapRow.Entities[col] == null) // 보스 등이 이미 차지했으면 덮어쓰지 않음
+                    {
+                        mapRow.Entities[col] = pending;
+                    }
                     continue;
                 }
 
@@ -453,12 +456,12 @@ namespace Game.Map
             {
                 return false;
             }
-            if (Hash01(col, row, 1) >= _entityDensity)
+            if (Hash01(col, row, SaltEntityRoll) >= _entityDensity)
             {
                 return false;
             }
 
-            prefab = PickWeighted(row, Hash01(col, row, 2));
+            prefab = PickWeighted(row, Hash01(col, row, SaltEntityPick));
             if (prefab == null)
             {
                 return false;
@@ -585,12 +588,12 @@ namespace Game.Map
             {
                 return false;
             }
-            if (Hash01(col, row, 7) >= _formationDensity)
+            if (Hash01(col, row, SaltFormationRoll) >= _formationDensity)
             {
                 return false;
             }
 
-            FormationSpawn f = PickFormation(row, Hash01(col, row, 8));
+            FormationSpawn f = PickFormation(row, Hash01(col, row, SaltFormationPick));
             if (f == null || f.enemy == null)
             {
                 return false;
@@ -1079,6 +1082,12 @@ namespace Game.Map
         {
             return ((long)row << 20) | (uint)(col & 0xFFFFF);
         }
+
+        // Hash01 salt — 채널이 겹치지 않게 서로 다른 값
+        private const int SaltEntityRoll = 1;   // 이 칸이 엔티티인가
+        private const int SaltEntityPick = 2;   // 어떤 엔티티인가
+        private const int SaltFormationRoll = 7; // 이 칸이 편대 앵커인가
+        private const int SaltFormationPick = 8; // 어떤 편대인가
 
         private float Hash01(int col, int row, int salt)
         {
