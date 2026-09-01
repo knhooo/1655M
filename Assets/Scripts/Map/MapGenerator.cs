@@ -134,6 +134,8 @@ namespace Game.Map
         [SerializeField] private GameObject _bossPrefab;
         [Tooltip("이 행에 보스가 1회 등장 (0 = 없음).")]
         [SerializeField] private int _bossRow = 40;
+        [Tooltip("보스 직전 이 행 수만큼 가운데 칸을 비워 진입 통로를 만든다.")]
+        [SerializeField, Min(0)] private int _bossApproachRows = 5;
         private bool _bossSpawned;
 
         // 이벤트 -----------------------------------------------------------
@@ -343,6 +345,32 @@ namespace Game.Map
                     mapRow.Views[col] = view;
                 }
             }
+
+            // 보스 진입 통로: 보스 직전 _bossApproachRows 개 행은 가운데 칸을 비운다
+            if (_bossRow > 0 && _bossApproachRows > 0
+                && row >= _bossRow - _bossApproachRows && row < _bossRow)
+            {
+                ForceClearCell(mapRow, Columns / 2, row);
+            }
+        }
+
+        /// <summary>한 칸을 강제로 빈 칸으로 만든다 (블록/뷰/엔티티/예약 전부 제거).</summary>
+        private void ForceClearCell(MapRow mapRow, int col, int row)
+        {
+            GridEntity e = mapRow.Entities[col];
+            if (e != null)
+            {
+                mapRow.Entities[col] = null;
+                DespawnEntity(e); // 다칸 엔티티면 나머지 칸까지 정리
+            }
+            _pendingEntityCells.Remove(CellKey(col, row));
+
+            if (mapRow.Views[col] != null)
+            {
+                _blockPool.Release(mapRow.Views[col]);
+                mapRow.Views[col] = null;
+            }
+            mapRow.Cells[col] = BlockData.Empty;
         }
 
         private void ReleaseRow(int row)

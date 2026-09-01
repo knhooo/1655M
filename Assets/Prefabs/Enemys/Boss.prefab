@@ -1,5 +1,55 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4836138279379065369
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5660616491622467100}
+  - component: {fileID: 5094762691650632261}
+  m_Layer: 0
+  m_Name: AttackVisual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5660616491622467100
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4836138279379065369}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.99999994, y: 0.99999994, z: 0.99999994}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 5239605540505939498}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5094762691650632261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4836138279379065369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7056a82228096ac4a8445ce9697ba999, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Enemies.BossAttackVisual
+  _map: {fileID: 0}
+  _markerPrefab: {fileID: 7612472017261956394, guid: 62c1ea5ae5e1cc84d9aa51d53d7db4bd, type: 3}
+  _prewarm: 32
+  _telegraphColor: {r: 1, g: 0.25, b: 0.15, a: 0.45}
+  _strikeColor: {r: 1, g: 1, b: 1, a: 0.9}
+  _strikeFlash: 0.16
 --- !u!1 &8336818166952752768
 GameObject:
   m_ObjectHideFlags: 0
@@ -30,7 +80,8 @@ Transform:
   m_LocalPosition: {x: 227.13646, y: 308.393, z: 0}
   m_LocalScale: {x: 9, y: 9, z: 9}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 5660616491622467100}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2038590980549704525
@@ -51,6 +102,11 @@ MonoBehaviour:
   _contactInterval: 1
   _attackInterval: 3
   _attackWindup: 2.5
+  _telegraphTime: 0.9
+  _attackDamage: 60
+  _blockDamage: 999
+  _columnReach: 2
+  _burstRadius: 2
   _coinReward: 150
 --- !u!212 &6573500126801727994
 SpriteRenderer:
