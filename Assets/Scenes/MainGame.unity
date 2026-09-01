@@ -1118,6 +1118,8 @@ MonoBehaviour:
   _cellSize: 1
   _rowsAhead: 20
   _rowsBehind: 6
+  _keepPassedTerrain: 1
+  _maxRowsBehind: 300
   _soilHp: 1
   _rockHp: 3
   _oreHp: 5
@@ -9103,7 +9105,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c174c70f0c5b12141a856bb5cd99f5b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.ShieldVisual
-  _ring: {fileID: 0}
 --- !u!114 &1477222406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9116,12 +9117,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b18c7b7a94161643bd0cc94615b276e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.ShockwaveVisual
-  _ring: {fileID: 0}
-  _duration: 0.3
-  _cellSize: 1
-  _t: -1
-  _targetDiameter: 0
-  _center: {x: 0, y: 0, z: 0}
 --- !u!114 &1477222407
 MonoBehaviour:
   m_ObjectHideFlags: 0

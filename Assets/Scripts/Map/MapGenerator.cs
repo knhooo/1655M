@@ -45,8 +45,12 @@ namespace Game.Map
         [SerializeField] private float _cellSize = 1f;
         [Tooltip("추적 대상 아래로 미리 만들어 둘 행 수.")]
         [SerializeField] private int _rowsAhead = 20;
-        [Tooltip("추적 대상 위로 이만큼 벗어난 행은 회수한다.")]
+        [Tooltip("추적 대상 위로 이만큼 벗어난 행은 회수한다. (_keepPassedTerrain 이면 무시)")]
         [SerializeField] private int _rowsBehind = 6;
+        [Tooltip("지나온(위쪽) 지형을 회수하지 않고 그대로 남긴다 — 원작처럼 파낸 터널이 유지됨.")]
+        [SerializeField] private bool _keepPassedTerrain = true;
+        [Tooltip("_keepPassedTerrain 이어도 이만큼 위로 벗어나면 회수 (0 = 무제한). 메모리 안전장치.")]
+        [SerializeField] private int _maxRowsBehind = 300;
 
         [Header("Strata HP (임시 밸런스 - 플레이어 대미지 17 기준: 1 / 3 / 6 타)")]
         [SerializeField] private int _soilHp = 15;
@@ -168,6 +172,7 @@ namespace Game.Map
 
         private int _topRow;
         private int _bottomRow;
+        private int _entityCulledRow; // _keepPassedTerrain 시: 이 행 위쪽은 엔티티가 이미 회수됨
         private bool _initialized;
         private bool _streaming = true;
 
@@ -227,7 +232,10 @@ namespace Game.Map
             int focusRow = tracked != null ? WorldToRow(tracked.position.y) : 0;
 
             int wantBottom = focusRow + _rowsAhead;
-            int wantTop = Mathf.Max(0, focusRow - _rowsBehind);
+            int behind = _keepPassedTerrain
+                ? (_maxRowsBehind > 0 ? _maxRowsBehind : int.MaxValue / 2)
+                : _rowsBehind;
+            int wantTop = Mathf.Max(0, focusRow - behind);
 
             for (int row = _bottomRow + 1; row <= wantBottom; row++)
             {
@@ -238,11 +246,43 @@ namespace Game.Map
                 _bottomRow = wantBottom;
             }
 
+            // 지형 유지 모드: 블록은 남기되 위로 벗어난 적/상자는 회수
+            if (_keepPassedTerrain)
+            {
+                int entityCullTop = Mathf.Max(0, focusRow - _rowsBehind);
+                for (int row = _entityCulledRow; row < entityCullTop; row++)
+                {
+                    CullRowEntities(row);
+                }
+                if (entityCullTop > _entityCulledRow)
+                {
+                    _entityCulledRow = entityCullTop;
+                }
+            }
+
             for (int row = _topRow; row < wantTop; row++)
             {
                 ReleaseRow(row);
             }
             _topRow = wantTop;
+        }
+
+        /// <summary>행의 블록/뷰는 그대로 두고 격자 엔티티(적·상자·재화)만 회수한다.</summary>
+        private void CullRowEntities(int row)
+        {
+            if (!_rows.TryGetValue(row, out MapRow mapRow))
+            {
+                return;
+            }
+            for (int col = 0; col < Columns; col++)
+            {
+                GridEntity e = mapRow.Entities[col];
+                if (e != null)
+                {
+                    mapRow.Entities[col] = null;
+                    DespawnEntity(e); // 다른 활성 칸까지 정리 + 풀 반납 (idempotent)
+                }
+            }
         }
 
         private void BuildRow(int row)
