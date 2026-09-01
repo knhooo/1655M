@@ -47,9 +47,19 @@ MonoBehaviour:
   _map: {fileID: 0}
   _markerPrefab: {fileID: 7612472017261956394, guid: 62c1ea5ae5e1cc84d9aa51d53d7db4bd, type: 3}
   _prewarm: 32
+  _markerScale: 0.9
+  _sortingOrder: 200
   _telegraphColor: {r: 1, g: 0.25, b: 0.15, a: 0.45}
   _strikeColor: {r: 1, g: 1, b: 1, a: 0.9}
   _strikeFlash: 0.16
+  _blinkHzStart: 2
+  _blinkHzEnd: 9
+  _shockPrefab: {fileID: 7612472017261956394, guid: 7bed6e8ae925c0a4d9863122d21a406d, type: 3}
+  _rippleInterval: 0.04
+  _shockDuration: 0.35
+  _shockStartScale: 1
+  _shockEndScale: 2.5
+  _shockColor: {r: 1, g: 0.55, b: 0.2, a: 0.95}
 --- !u!1 &8336818166952752768
 GameObject:
   m_ObjectHideFlags: 0
@@ -62,7 +72,7 @@ GameObject:
   - component: {fileID: 2038590980549704525}
   - component: {fileID: 6573500126801727994}
   m_Layer: 0
-  m_Name: Boss
+  m_Name: BossA
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -77,8 +87,8 @@ Transform:
   m_GameObject: {fileID: 8336818166952752768}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 227.13646, y: 308.393, z: 0}
-  m_LocalScale: {x: 9, y: 9, z: 9}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 7, y: 7, z: 7}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5660616491622467100}
@@ -105,8 +115,7 @@ MonoBehaviour:
   _telegraphTime: 0.9
   _attackDamage: 60
   _blockDamage: 999
-  _columnReach: 2
-  _burstRadius: 2
+  _columnLength: 9
   _coinReward: 150
 --- !u!212 &6573500126801727994
 SpriteRenderer:

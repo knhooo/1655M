@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 682084155920494799}
   - component: {fileID: 7612472017261956394}
   m_Layer: 0
-  m_Name: marker
+  m_Name: bossAttack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,7 +81,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -688962450749631956, guid: e5b682f6a794e8c4a83ae96cb40e493c, type: 3}
+  m_Sprite: {fileID: 6992147927975329872, guid: 0761370747eaa954a9c2aefec265ee97, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

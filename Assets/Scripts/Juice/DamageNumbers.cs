@@ -50,6 +50,7 @@ namespace Game.Juice
         // 구독은 Start 에서 (모든 Awake 이후 = PlayerController.Instance 보장)
         private void Start()
         {
+            if (_map == null) _map = MapGenerator.Instance;
             if (PlayerController.Instance != null) PlayerController.Instance.DamageTaken += OnPlayerDamaged;
             if (_map != null) _map.DamageDealt += OnDamageDealt;
         }

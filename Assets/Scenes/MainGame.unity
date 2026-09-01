@@ -1111,6 +1111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Map.MapGenerator
   _blockPrefab: {fileID: 8644267524007092839, guid: 845d1a15f0d502f4099f40bfa0be06cf, type: 3}
+  _debrisChance: 1
   _tracked: {fileID: 1748223059}
   _blockRoot: {fileID: 0}
   _cellSize: 1
@@ -1186,8 +1187,11 @@ MonoBehaviour:
     span: 0
     weight: 1
     minRow: 30
-  _bossPrefab: {fileID: 8336818166952752768, guid: 93647d30980167a449e4a682a5e7681b, type: 3}
-  _bossRow: 50
+  _bosses:
+  - prefab: {fileID: 8336818166952752768, guid: 93647d30980167a449e4a682a5e7681b, type: 3}
+    row: 40
+  - prefab: {fileID: 8336818166952752768, guid: 9f958ea3a02c7bb4bbedf75ee9b31e52, type: 3}
+    row: 80
   _bossApproachRows: 5
 --- !u!1 &283350202
 GameObject:
@@ -1947,7 +1951,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6295474923448991246, guid: c3c304333efec37409bf2f973f657d65, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9612,7 +9616,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1507283773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10640,8 +10644,8 @@ MonoBehaviour:
   _fallDuration: 0.06
   _digInterval: 0.12
   _stepInterval: 0.04
-  _showDebugHud: 0
-  _godMode: 0
+  _showDebugHud: 1
+  _godMode: 1
 --- !u!4 &1748223059
 Transform:
   m_ObjectHideFlags: 0

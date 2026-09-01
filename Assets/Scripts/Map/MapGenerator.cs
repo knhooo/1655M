@@ -38,6 +38,7 @@ namespace Game.Map
         private Transform Root => _blockRoot != null ? _blockRoot : transform;
 
         public PlayerController Player => PlayerController.Instance;
+        public float CellSize => _cellSize;
 
         /// <summary>스트리밍 기준 Transform. _tracked 미할당이면 플레이어.</summary>
         private Transform Tracked => _tracked != null ? _tracked
@@ -131,14 +132,21 @@ namespace Game.Map
         [SerializeField, Range(0f, 0.1f)] private float _formationDensity = 0.015f;
         [SerializeField] private FormationSpawn[] _formationTable;
 
+        [Serializable]
+        private class BossSpawn
+        {
+            [Tooltip("보스 프리팹 (루트에 GridEntity, Size 9x9).")]
+            public GameObject prefab;
+            [Tooltip("이 행에 1회 등장.")]
+            public int row = 40;
+        }
+
         [Header("Boss")]
-        [Tooltip("보스 프리팹 (루트에 GridEntity, Size 9x9).")]
-        [SerializeField] private GameObject _bossPrefab;
-        [Tooltip("이 행에 보스가 1회 등장 (0 = 없음).")]
-        [SerializeField] private int _bossRow = 40;
-        [Tooltip("보스 직전 이 행 수만큼 가운데 칸을 비워 진입 통로를 만든다.")]
+        [Tooltip("깊이별 보스. 각각 해당 행에서 런당 1회 등장.")]
+        [SerializeField] private BossSpawn[] _bosses;
+        [Tooltip("각 보스 직전 이 행 수만큼 가운데 칸을 비워 진입 통로를 만든다.")]
         [SerializeField, Min(0)] private int _bossApproachRows = 5;
-        private bool _bossSpawned;
+        private readonly HashSet<int> _bossesSpawned = new();
 
         // 이벤트 -----------------------------------------------------------
         /// <summary>블록이 완전히 파괴됐을 때: (col, row, 파괴된 블록 데이터).</summary>
@@ -184,8 +192,16 @@ namespace Game.Map
         // 라이프사이클
         // ------------------------------------------------------------------
 
+        /// <summary>씬 단위 싱글톤. 기존 주입(_map / Place)도 그대로 유효 — 배선 편의용.</summary>
+        public static MapGenerator Instance { get; private set; }
+
         private void Awake()
         {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+
             int prewarm = Columns * (_rowsAhead + _rowsBehind + 4);
             _blockPool = new ObjectPool<BlockView>(
                 createFunc: CreateBlockView,
@@ -195,6 +211,14 @@ namespace Game.Map
                 collectionCheck: false,
                 defaultCapacity: prewarm,
                 maxSize: Columns * 512);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Start()
@@ -300,9 +324,16 @@ namespace Game.Map
             _rows.Add(row, mapRow);
 
             // 보스 행이면 이 행을 통째로 보스가 채운다 (col 루프는 남은 칸을 건너뜀)
-            if (!_bossSpawned && _bossRow > 0 && row == _bossRow)
+            if (_bosses != null)
             {
-                TrySpawnBoss(mapRow, row);
+                for (int i = 0; i < _bosses.Length; i++)
+                {
+                    BossSpawn b = _bosses[i];
+                    if (b != null && b.prefab != null && b.row == row && _bossesSpawned.Add(i))
+                    {
+                        TrySpawnBoss(b.prefab, mapRow, row);
+                    }
+                }
             }
 
             for (int col = 0; col < Columns; col++)
@@ -348,11 +379,18 @@ namespace Game.Map
                 }
             }
 
-            // 보스 진입 통로: 보스 직전 _bossApproachRows 개 행은 가운데 칸을 비운다
-            if (_bossRow > 0 && _bossApproachRows > 0
-                && row >= _bossRow - _bossApproachRows && row < _bossRow)
+            // 보스 진입 통로: 각 보스 직전 _bossApproachRows 개 행은 가운데 칸을 비운다
+            if (_bossApproachRows > 0 && _bosses != null)
             {
-                ForceClearCell(mapRow, Columns / 2, row);
+                for (int i = 0; i < _bosses.Length; i++)
+                {
+                    BossSpawn b = _bosses[i];
+                    if (b != null && b.row > 0 && row >= b.row - _bossApproachRows && row < b.row)
+                    {
+                        ForceClearCell(mapRow, Columns / 2, row);
+                        break;
+                    }
+                }
             }
         }
 
@@ -513,6 +551,28 @@ namespace Game.Map
             EntitySpawned?.Invoke(e);
         }
 
+        /// <summary>
+        /// 지정한 칸에 1x1 엔티티를 즉석 스폰한다 (보스 소환 등). 칸이 비어 있지 않거나 아직 생성 전이면 false.
+        /// </summary>
+        public bool TrySpawnEntityAt(GridEntity prefab, int col, int row)
+        {
+            if (prefab == null || col < 0 || col >= Columns || row < 0)
+            {
+                return false;
+            }
+            if (!_rows.TryGetValue(row, out MapRow mr) || mr.Cells[col].IsSolid || mr.Entities[col] != null)
+            {
+                return false;
+            }
+
+            GridEntity e = GetPool(prefab).Get();
+            _entityPrefabOf[e] = prefab;
+            e.Place(this, col, row, CellToWorld(col, row));
+            mr.Entities[col] = e;
+            EntitySpawned?.Invoke(e);
+            return true;
+        }
+
         // ------------------------------------------------------------------
         // 적 편대 (같은 적을 정해진 모양으로 무리 배치)
         // ------------------------------------------------------------------
@@ -570,19 +630,14 @@ namespace Game.Map
             return true;
         }
 
-        private void TrySpawnBoss(MapRow mapRow, int row)
+        private void TrySpawnBoss(GameObject bossPrefab, MapRow mapRow, int row)
         {
-            if (_bossPrefab == null)
-            {
-                return;
-            }
-            GridEntity prefab = _bossPrefab.GetComponent<GridEntity>();
+            GridEntity prefab = bossPrefab != null ? bossPrefab.GetComponent<GridEntity>() : null;
             if (prefab == null)
             {
-                Debug.LogWarning("[MapGenerator] _bossPrefab 루트에 GridEntity 없음", this);
+                Debug.LogWarning("[MapGenerator] 보스 프리팹 루트에 GridEntity 없음", this);
                 return;
             }
-            _bossSpawned = true;
             SpawnEntity(prefab, prefab.Size, 0, row, mapRow); // 앵커 col 0, Size(9,9) 가정
             Debug.Log($"[MapGenerator] 보스 등장 @ row {row}", this);
         }

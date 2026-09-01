@@ -88,6 +88,7 @@ namespace Game.Player
         private float _critMultiplier;
         private bool _dashing;
         private bool _controlEnabled = true;
+        private bool _levitating;   // 토네이도 등에 붕 떠 있음 — 조작 불가
         private float _shieldTimer;
         private float _shieldReduction;
 
@@ -205,6 +206,11 @@ namespace Game.Player
             }
 
             TickShield(); // 버프는 상태 무관 실시간
+
+            if (_levitating)
+            {
+                return; // 토네이도 코루틴이 위치를 제어
+            }
 
             // 진행 중인 칸 이동은 죽더라도 끝까지 재생한다 (여기서 멈추면 코루틴/플래그가 stuck 된다).
             if (_isAnimating)
@@ -571,6 +577,50 @@ namespace Game.Player
         public void SetControlEnabled(bool value)
         {
             _controlEnabled = value;
+        }
+
+        public bool IsLevitating => _levitating;
+
+        /// <summary>
+        /// 토네이도 등에 붕 떠올랐다가 내려온다. <paramref name="duration"/> 동안 조작 불가.
+        /// 격자 좌표(col/row)는 그대로 — 뜬 자리로 다시 내려온다. 피해가 있으면 시작 시 1회 적용.
+        /// </summary>
+        public void Levitate(float peakHeight, float duration, int damage, Vector3 source)
+        {
+            if (!IsAlive || _levitating)
+            {
+                return;
+            }
+            if (damage > 0)
+            {
+                Damage(damage, source);
+            }
+            if (!IsAlive)
+            {
+                return;
+            }
+            StartCoroutine(LevitateRoutine(Mathf.Max(0.1f, peakHeight), Mathf.Max(0.1f, duration)));
+        }
+
+        private IEnumerator LevitateRoutine(float peak, float dur)
+        {
+            _levitating = true;
+            _isAnimating = false;
+            _dashing = false;
+
+            Vector3 ground = _map != null ? _map.CellToWorld(_col, _row) : transform.position;
+            float t = 0f;
+            while (t < 1f && IsAlive)
+            {
+                t += Time.deltaTime / dur;
+                float k = Mathf.Clamp01(t);
+                transform.position = ground + Vector3.up * (Mathf.Sin(k * Mathf.PI) * peak);
+                yield return null;
+            }
+
+            transform.position = ground;
+            _levitating = false;
+            _actionTimer = 0.1f;
         }
 
         public void Heal(int amount)

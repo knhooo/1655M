@@ -52,7 +52,7 @@ namespace Game.Juice
             }
             if (_map == null)
             {
-                _map = FindFirstObjectByType<MapGenerator>();
+                _map = MapGenerator.Instance;
             }
 
             if (PlayerController.Instance != null)

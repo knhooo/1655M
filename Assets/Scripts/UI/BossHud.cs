@@ -36,7 +36,7 @@ namespace Game.UI
         {
             if (_map == null)
             {
-                _map = FindFirstObjectByType<MapGenerator>();
+                _map = MapGenerator.Instance;
             }
             if (_map != null)
             {
